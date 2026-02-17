@@ -10,19 +10,6 @@ yarn-error.log*
 pnpm-debug.log*
 *.tsbuildinfo
 
-# ---- Python ----
-.venv/
-venv/
-env/
-__pycache__/
-*.py[cod]
-*.pyd
-.pytest_cache/
-.mypy_cache/
-
-# ---- Streamlit / Secrets ----
-.streamlit/secrets.toml
-
 # ---- Environment files ----
 .env
 .env.local
@@ -32,8 +19,6 @@ __pycache__/
 # ---- Project generated artifacts ----
 .cache/
 .perf/
-scripts/data/*.csv
-scripts/data/*.jsonl
 
 # ---- Editor / OS ----
 .vscode/
