@@ -5,13 +5,6 @@ backgroundColor = "#FFFFFF"
 secondaryBackgroundColor = "#F7F7F7"
 textColor = "#000000"
 font = "sans serif"
-baseRadius = "large"
-buttonRadius = "full"
-borderColor = "#E4E4E4"
-dataframeBorderColor = "#E4E4E4"
-dataframeHeaderBackgroundColor = "#F3F3F3"
-showWidgetBorder = true
-showSidebarBorder = true
 
 [server]
 headless = true

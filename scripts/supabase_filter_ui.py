@@ -482,51 +482,11 @@ def inject_styles(theme_mode: str) -> None:
         }}
 
         [data-testid="stDataFrame"],
-        [data-testid="stDataFrameResizable"],
-        .stDataFrameGlideDataEditor,
         [data-testid="stTable"] {{
           border: 1px solid var(--line);
           border-radius: var(--radius-lg);
           overflow: hidden;
           background: var(--surface);
-        }}
-
-        [data-testid="stDataFrame"] *,
-        [data-testid="stDataFrameResizable"] *,
-        .stDataFrameGlideDataEditor * {{
-          font-size: .88rem !important;
-          color: var(--text) !important;
-        }}
-
-        [data-testid="stDataFrameResizable"],
-        .stDataFrameGlideDataEditor,
-        [data-testid="stDataFrameResizable"] div[style*="--gdg-accent-color"],
-        [data-testid="stDataFrameResizable"] div[style*="--gdg-bg-cell"],
-        [data-testid="stDataFrameResizable"] div[style*="--header-height"] {{
-          --gdg-bg-header: var(--df-header-bg) !important;
-          --gdg-bg-header-hovered: var(--df-header-bg-hover) !important;
-          --gdg-bg-header-has-focus: var(--df-header-bg-hover) !important;
-          --gdg-text-header: var(--df-header-text) !important;
-          --gdg-bg-icon-header: var(--df-header-text) !important;
-          --gdg-fg-icon-header: var(--df-header-text) !important;
-          --gdg-bg-cell: var(--surface) !important;
-          --gdg-bg-cell-medium: var(--surface-alt) !important;
-          --gdg-text-dark: var(--text) !important;
-          --gdg-text-medium: var(--text-muted) !important;
-          --gdg-text-light: var(--text-muted) !important;
-          --gdg-border-color: var(--line) !important;
-          --gdg-horizontal-border-color: var(--line) !important;
-          --gdg-vertical-border-color: var(--line) !important;
-        }}
-
-        [data-testid="stDataFrameResizable"][style*="--gdg-bg-header"],
-        [data-testid="stDataFrameResizable"] [style*="--gdg-bg-header"] {{
-          --gdg-bg-header: {palette["df_header_bg"]} !important;
-          --gdg-bg-header-hovered: {palette["df_header_bg_hover"]} !important;
-          --gdg-bg-header-has-focus: {palette["df_header_bg_hover"]} !important;
-          --gdg-text-header: {palette["df_header_text"]} !important;
-          --gdg-bg-icon-header: {palette["df_header_text"]} !important;
-          --gdg-fg-icon-header: {palette["df_header_text"]} !important;
         }}
 
         .pager-center {{
