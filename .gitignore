@@ -1,18 +1,41 @@
-node_modules
-.next
-out
-.env
-.env.local
-.DS_Store
+# ---- Node / Next.js ----
+node_modules/
+.next/
+out/
+.vercel/
+.npm-cache/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 *.tsbuildinfo
-.vercel
-.env*.local
-.venv
-scripts/.venv
+
+# ---- Python ----
+.venv/
+venv/
+env/
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# ---- Streamlit / Secrets ----
 .streamlit/secrets.toml
+
+# ---- Environment files ----
+.env
+.env.local
+.env.*.local
+.env*.local
+
+# ---- Project generated artifacts ----
+.cache/
+.perf/
+scripts/data/*.csv
+scripts/data/*.jsonl
+
+# ---- Editor / OS ----
+.vscode/
+.idea/
+.DS_Store

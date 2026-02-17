@@ -33,7 +33,7 @@ BUSINESS_NAME_DIV_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 SERVICE_NAME_RE = re.compile(
-    r'data-testid="service-name"[^>]*>\s*(.*?)\s*</h3>',
+    r'data-testid="service-name"[^>]*>\s*(.*?)\s*</',
     re.IGNORECASE | re.DOTALL,
 )
 SERVICE_DURATION_RE = re.compile(
@@ -156,7 +156,7 @@ def extract_services(page_html: str) -> list[dict[str, str | int | None]]:
         duration_minutes = parse_duration_minutes(duration_text)
         price_cents = parse_euro_to_cents(service_price)
 
-        if service_name and service_price:
+        if service_name:
             services.append(
                 {
                     "name": service_name,
@@ -244,12 +244,14 @@ def build_supabase_payload(
 
     service_rows = []
     for service in services:
+        has_price = service["price_cents"] is not None
         row: dict[str, object] = {
             "name": service["name"],
-            "price_kind": "fixed",
+            "price_kind": "fixed" if has_price else "quote",
             "currency_code": "EUR",
-            "price_cents": service["price_cents"],
         }
+        if has_price:
+            row["price_cents"] = service["price_cents"]
         if service["duration_minutes"] is not None:
             row["duration_minutes"] = service["duration_minutes"]
         service_rows.append(row)
@@ -336,7 +338,7 @@ def run(
                 raise RuntimeError("No se encontró el nombre del negocio.")
             services = extract_services(html_doc)
             if not services:
-                raise RuntimeError("No se encontraron servicios con precio.")
+                raise RuntimeError("No se encontraron servicios.")
 
             if supabase_enabled:
                 payload = build_supabase_payload(
