@@ -17,6 +17,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  TableSortLabel,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
@@ -49,13 +50,27 @@ type BusinessDetailResponse = {
   services: ServiceItem[];
 };
 
+type BusinessSortField = 'service_id' | 'service_name' | 'category' | 'price' | 'duration';
+
 export function ResultsView({ filters, services, businesses }: Props) {
   const [businessModalOpen, setBusinessModalOpen] = useState(false);
   const [isLoadingBusiness, setIsLoadingBusiness] = useState(false);
   const [businessDetail, setBusinessDetail] = useState<BusinessDetailResponse | null>(null);
   const [businessDetailError, setBusinessDetailError] = useState<string | null>(null);
+  const [businessSortField, setBusinessSortField] = useState<BusinessSortField>('service_name');
+  const [businessSortDirection, setBusinessSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const serviceRows = useMemo(() => businessDetail?.services ?? [], [businessDetail]);
+  const sortedServiceRows = useMemo(() => {
+    const rows = [...serviceRows];
+    rows.sort((a, b) => {
+      const left = getSortValue(a, businessSortField);
+      const right = getSortValue(b, businessSortField);
+      const cmp = compareSortValues(left, right);
+      return businessSortDirection === 'asc' ? cmp : -cmp;
+    });
+    return rows;
+  }, [serviceRows, businessSortDirection, businessSortField]);
 
   const openBusinessDetail = async (businessId: string | null) => {
     if (!businessId) return;
@@ -80,6 +95,15 @@ export function ResultsView({ filters, services, businesses }: Props) {
     } finally {
       setIsLoadingBusiness(false);
     }
+  };
+
+  const onSortBusinessTable = (field: BusinessSortField) => {
+    if (businessSortField === field) {
+      setBusinessSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setBusinessSortField(field);
+    setBusinessSortDirection('asc');
   };
 
   if (filters.view === 'table') {
@@ -156,15 +180,8 @@ export function ResultsView({ filters, services, businesses }: Props) {
           ))}
         </Stack>
 
-        <Dialog
-          open={businessModalOpen}
-          onClose={() => setBusinessModalOpen(false)}
-          maxWidth="lg"
-          fullWidth
-        >
-          <DialogTitle>
-            {businessDetail?.business.business_name ?? 'Detalle de negocio'}
-          </DialogTitle>
+        <Dialog open={businessModalOpen} onClose={() => setBusinessModalOpen(false)} maxWidth="lg" fullWidth>
+          <DialogTitle>{businessDetail?.business.business_name ?? 'Detalle de negocio'}</DialogTitle>
           <DialogContent>
             {isLoadingBusiness ? (
               <Stack direction="row" spacing={2} alignItems="center" py={2}>
@@ -235,25 +252,61 @@ export function ResultsView({ filters, services, businesses }: Props) {
                 <Table size="small" aria-label="servicios del negocio">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Service ID</TableCell>
-                      <TableCell>Servicio</TableCell>
-                      <TableCell>Categoria</TableCell>
-                      <TableCell>Precio</TableCell>
-                      <TableCell>Duracion</TableCell>
+                      <TableCell>
+                        <TableSortLabel
+                          active={businessSortField === 'service_id'}
+                          direction={businessSortField === 'service_id' ? businessSortDirection : 'asc'}
+                          onClick={() => onSortBusinessTable('service_id')}
+                        >
+                          Service ID
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell>
+                        <TableSortLabel
+                          active={businessSortField === 'service_name'}
+                          direction={businessSortField === 'service_name' ? businessSortDirection : 'asc'}
+                          onClick={() => onSortBusinessTable('service_name')}
+                        >
+                          Servicio
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell>
+                        <TableSortLabel
+                          active={businessSortField === 'category'}
+                          direction={businessSortField === 'category' ? businessSortDirection : 'asc'}
+                          onClick={() => onSortBusinessTable('category')}
+                        >
+                          Categoria
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell>
+                        <TableSortLabel
+                          active={businessSortField === 'price'}
+                          direction={businessSortField === 'price' ? businessSortDirection : 'asc'}
+                          onClick={() => onSortBusinessTable('price')}
+                        >
+                          Precio
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell>
+                        <TableSortLabel
+                          active={businessSortField === 'duration'}
+                          direction={businessSortField === 'duration' ? businessSortDirection : 'asc'}
+                          onClick={() => onSortBusinessTable('duration')}
+                        >
+                          Duracion
+                        </TableSortLabel>
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {serviceRows.map((service, index) => (
+                    {sortedServiceRows.map((service, index) => (
                       <TableRow key={`${service.service_id ?? 'service'}-${index}`}>
                         <TableCell>{service.service_id ?? '-'}</TableCell>
                         <TableCell>{service.service_name ?? '-'}</TableCell>
-                        <TableCell>
-                          {service.service_category_label ?? service.service_category_code ?? '-'}
-                        </TableCell>
+                        <TableCell>{service.service_category_label ?? service.service_category_code ?? '-'}</TableCell>
                         <TableCell>{formatServicePrice(service)}</TableCell>
-                        <TableCell>
-                          {service.duration_minutes !== null ? `${service.duration_minutes} min` : '-'}
-                        </TableCell>
+                        <TableCell>{service.duration_minutes !== null ? `${service.duration_minutes} min` : '-'}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -286,6 +339,24 @@ export function ResultsView({ filters, services, businesses }: Props) {
       ))}
     </Stack>
   );
+}
+
+function getSortValue(service: ServiceItem, field: BusinessSortField): number | string {
+  if (field === 'service_id') return Number(service.service_id ?? Number.MAX_SAFE_INTEGER);
+  if (field === 'service_name') return (service.service_name ?? '').toLowerCase();
+  if (field === 'category') return (service.service_category_label ?? service.service_category_code ?? '').toLowerCase();
+  if (field === 'price') {
+    if (typeof service.price_cents === 'number') return service.price_cents;
+    if (typeof service.price_min_cents === 'number') return service.price_min_cents;
+    if (typeof service.price_max_cents === 'number') return service.price_max_cents;
+    return Number.MAX_SAFE_INTEGER;
+  }
+  return typeof service.duration_minutes === 'number' ? service.duration_minutes : Number.MAX_SAFE_INTEGER;
+}
+
+function compareSortValues(left: number | string, right: number | string) {
+  if (typeof left === 'number' && typeof right === 'number') return left - right;
+  return String(left).localeCompare(String(right), 'es', { sensitivity: 'base' });
 }
 
 export function ViewModeToggle({ filters }: { filters: Filters }) {
