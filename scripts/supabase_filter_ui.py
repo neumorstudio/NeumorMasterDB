@@ -195,50 +195,6 @@ def inject_styles(theme_mode: str) -> None:
           color: var(--text) !important;
         }}
 
-        .modal-table-wrap {{
-          margin-top: .25rem;
-          border: 1px solid var(--line);
-          border-radius: 12px;
-          background: var(--surface);
-          max-height: 360px;
-          overflow: auto;
-        }}
-
-        .modal-table {{
-          width: 100%;
-          border-collapse: collapse;
-          table-layout: fixed;
-          font-size: .84rem;
-        }}
-
-        .modal-table thead th {{
-          position: sticky;
-          top: 0;
-          z-index: 1;
-          background: var(--surface-alt);
-          color: var(--text) !important;
-          font-weight: 600;
-          text-align: left;
-          border-bottom: 1px solid var(--line);
-          padding: .5rem .55rem;
-        }}
-
-        .modal-table tbody td {{
-          color: var(--text) !important;
-          border-bottom: 1px solid var(--line);
-          padding: .45rem .55rem;
-          vertical-align: top;
-          background: var(--surface);
-        }}
-
-        .modal-table tbody tr:last-child td {{
-          border-bottom: none;
-        }}
-
-        .modal-table col:nth-child(1) {{ width: 62%; }}
-        .modal-table col:nth-child(2) {{ width: 20%; }}
-        .modal-table col:nth-child(3) {{ width: 18%; }}
-
         .hero-shell {{
           border: 1px solid var(--line);
           border-radius: var(--radius-lg);
@@ -508,6 +464,22 @@ def inject_styles(theme_mode: str) -> None:
         """,
         unsafe_allow_html=True,
     )
+
+
+def apply_streamlit_theme(theme_mode: str) -> None:
+    if theme_mode == "Oscuro":
+        st._config.set_option("theme.base", "dark")
+        st._config.set_option("theme.primaryColor", "#F2F2F2")
+        st._config.set_option("theme.backgroundColor", "#090909")
+        st._config.set_option("theme.secondaryBackgroundColor", "#121212")
+        st._config.set_option("theme.textColor", "#F5F5F5")
+        return
+
+    st._config.set_option("theme.base", "light")
+    st._config.set_option("theme.primaryColor", "#000000")
+    st._config.set_option("theme.backgroundColor", "#FFFFFF")
+    st._config.set_option("theme.secondaryBackgroundColor", "#F7F7F7")
+    st._config.set_option("theme.textColor", "#000000")
 
 
 def init_state() -> None:
@@ -1006,25 +978,29 @@ def show_business_detail_dialog(business: dict[str, Any], services: list[dict[st
 
     if services:
         st.markdown("#### Servicios de este negocio (según filtros actuales)")
-        table_rows = []
-        for service in services:
-            service_name = html.escape(str(service.get("service_name") or "-"))
-            category = html.escape(str(service.get("service_category_label") or service.get("service_category_code") or "-"))
-            price = html.escape(format_service_price(service))
-            table_rows.append(
-                f"<tr><td>{service_name}</td><td>{category}</td><td>{price}</td></tr>"
-            )
-
-        table_html = (
-            "<div class='modal-table-wrap'>"
-            "<table class='modal-table'>"
-            "<colgroup><col><col><col></colgroup>"
-            "<thead><tr><th>Servicio</th><th>Categoria</th><th>Precio</th></tr></thead>"
-            f"<tbody>{''.join(table_rows)}</tbody>"
-            "</table>"
-            "</div>"
+        service_rows = [
+            {
+                "Servicio": s.get("service_name"),
+                "Categoria": s.get("service_category_label") or s.get("service_category_code"),
+                "Precio": (
+                    (effective_price_cents(s) / 100)
+                    if isinstance(effective_price_cents(s), int)
+                    else None
+                ),
+                "Tipo precio": s.get("price_kind") or "-",
+                "Duracion (min)": s.get("duration_minutes"),
+            }
+            for s in services
+        ]
+        st.dataframe(
+            service_rows,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Precio": st.column_config.NumberColumn("Precio", format="%.2f EUR"),
+                "Duracion (min)": st.column_config.NumberColumn("Duracion (min)", format="%d"),
+            },
         )
-        st.markdown(table_html, unsafe_allow_html=True)
 
     with st.expander("Ver JSON completo del negocio"):
         st.json(business)
@@ -1042,6 +1018,12 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
     init_state()
+    current_theme = st.session_state.get("ui_theme_mode", THEME_MODE_OPTIONS[0])
+    if st.session_state.get("last_applied_theme_mode") != current_theme:
+        st.session_state["last_applied_theme_mode"] = current_theme
+        clear_selected_details()
+    apply_streamlit_theme(current_theme)
+    inject_styles(current_theme)
 
     supabase_url = read_setting("SUPABASE_URL")
     api_key = (
@@ -1066,12 +1048,6 @@ def main() -> None:
                 type="password",
                 placeholder="anon o service role",
             )
-
-    current_theme = st.session_state.get("ui_theme_mode", THEME_MODE_OPTIONS[0])
-    if st.session_state.get("last_applied_theme_mode") != current_theme:
-        st.session_state["last_applied_theme_mode"] = current_theme
-        clear_selected_details()
-    inject_styles(current_theme)
 
     if not supabase_url or not api_key:
         st.warning("Configura SUPABASE_URL y API key para continuar.")
