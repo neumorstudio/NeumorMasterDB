@@ -462,6 +462,15 @@ def inject_styles(theme_mode: str) -> None:
           --gdg-vertical-border-color: var(--line) !important;
         }}
 
+        [data-testid="stDataFrame"] [style*="--gdg-bg-header"] {{
+          --gdg-bg-header: {palette["df_header_bg"]} !important;
+          --gdg-bg-header-hovered: {palette["df_header_bg_hover"]} !important;
+          --gdg-bg-header-has-focus: {palette["df_header_bg_hover"]} !important;
+          --gdg-text-header: {palette["df_header_text"]} !important;
+          --gdg-bg-icon-header: {palette["df_header_text"]} !important;
+          --gdg-fg-icon-header: {palette["df_header_text"]} !important;
+        }}
+
         .pager-center {{
           text-align: center;
           padding-top: .45rem;
