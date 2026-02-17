@@ -682,12 +682,25 @@ def show_business_detail_dialog(business: dict[str, Any]) -> None:
             {
                 "Servicio": s.get("service_name"),
                 "Categoria": s.get("service_category_label") or s.get("service_category_code"),
-                "Precio": format_service_price(s),
-                "Duracion": f"{s.get('duration_minutes')} min" if s.get("duration_minutes") is not None else "-",
+                "Precio": (
+                    (effective_price_cents(s) / 100)
+                    if isinstance(effective_price_cents(s), int)
+                    else None
+                ),
+                "Tipo precio": s.get("price_kind") or "-",
+                "Duracion (min)": s.get("duration_minutes"),
             }
             for s in services
         ]
-        st.dataframe(service_rows, use_container_width=True, hide_index=True)
+        st.dataframe(
+            service_rows,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Precio": st.column_config.NumberColumn("Precio", format="%.2f EUR"),
+                "Duracion (min)": st.column_config.NumberColumn("Duracion (min)", format="%d"),
+            },
+        )
 
     with st.expander("Ver JSON completo del negocio"):
         st.json(business)
