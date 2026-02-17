@@ -68,142 +68,301 @@ def inject_styles() -> None:
     st.markdown(
         """
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap');
+        :root {
+          --bg: #FFFFFF;
+          --bg-soft: #FAFAFA;
+          --text: #000000;
+          --text-muted: #4A4A4A;
+          --line: #E4E4E4;
+          --line-strong: #BFBFBF;
+          --surface: #FFFFFF;
+          --surface-alt: #F7F7F7;
+          --radius-lg: 14px;
+          --radius-md: 10px;
+          --space-1: .5rem;
+          --space-2: .75rem;
+          --space-3: 1rem;
+          --space-4: 1.5rem;
+          --space-5: 2rem;
+        }
 
-        html, body, [class*="css"], [data-testid="stMarkdownContainer"] p {
-          font-family: "Manrope", sans-serif !important;
+        html, body, [class*="css"], [data-testid="stMarkdownContainer"] p,
+        [data-testid="stSidebar"], .stTextInput, .stSelectbox, .stMultiSelect, .stSlider {
+          font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+          color: var(--text);
         }
-        h1, h2, h3 {
-          font-family: "Playfair Display", serif !important;
-          letter-spacing: .01em;
-        }
+
         [data-testid="stAppViewContainer"] {
-          background:
-            radial-gradient(950px 420px at 0% -10%, rgba(201, 168, 106, .12), transparent 60%),
-            radial-gradient(1100px 520px at 100% -20%, rgba(64, 98, 181, .16), transparent 62%),
-            linear-gradient(180deg, #0B0E14 0%, #0A1018 100%);
+          background: var(--bg-soft);
         }
+
+        [data-testid="stHeader"] {
+          background: rgba(255, 255, 255, 0.85);
+          border-bottom: 1px solid var(--line);
+          backdrop-filter: blur(8px);
+        }
+
         [data-testid="stSidebar"] > div:first-child {
-          background: linear-gradient(180deg, #0E1421 0%, #0C111B 100%);
+          background: var(--surface);
+          border-right: 1px solid var(--line);
         }
+
         .block-container {
-          max-width: 1320px;
-          padding-top: 1.2rem;
+          max-width: 1240px;
+          padding-top: 2rem;
           padding-bottom: 2rem;
         }
-        .hero-shell {
-          border: 1px solid #2A3345;
-          border-radius: 18px;
-          background: linear-gradient(125deg, rgba(18, 24, 36, .88), rgba(13, 19, 31, .72));
-          box-shadow: 0 16px 42px rgba(0, 0, 0, 0.30);
-          padding: 1.25rem 1.35rem;
-          margin-bottom: 1rem;
+
+        h1, h2, h3, h4 {
+          font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+          color: var(--text);
+          letter-spacing: -0.01em;
         }
+
+        .hero-shell {
+          border: 1px solid var(--line);
+          border-radius: var(--radius-lg);
+          background: var(--surface);
+          padding: var(--space-5);
+          margin-bottom: var(--space-4);
+        }
+
         .hero-kicker {
           text-transform: uppercase;
           letter-spacing: .12em;
-          color: #C9A86A;
-          font-weight: 700;
-          font-size: .74rem;
+          color: var(--text-muted);
+          font-weight: 600;
+          font-size: .72rem;
         }
+
         .hero-title {
-          margin: .35rem 0 .45rem 0;
-          font-size: clamp(1.55rem, 2.8vw, 2.35rem);
-          line-height: 1.1;
-          color: #F4F7FF;
+          margin: .35rem 0 .65rem 0;
+          font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+          line-height: 1.12;
+          color: var(--text);
+          font-weight: 700;
         }
+
         .hero-sub {
-          color: #AEB9CF;
+          color: var(--text-muted);
           font-size: .98rem;
           max-width: 860px;
-          line-height: 1.5;
+          line-height: 1.6;
         }
+
         .panel-shell {
-          border: 1px solid #2A3345;
-          border-radius: 16px;
-          background: linear-gradient(180deg, rgba(16, 23, 35, .72), rgba(14, 20, 31, .72));
-          padding: 1rem 1rem .8rem 1rem;
-          margin: .65rem 0 1rem 0;
+          border: 1px solid var(--line);
+          border-radius: var(--radius-lg);
+          background: var(--surface);
+          padding: var(--space-4);
+          margin: var(--space-3) 0 var(--space-4) 0;
         }
+
         .section-kicker {
           text-transform: uppercase;
-          letter-spacing: .11em;
-          color: #8D9FBE;
-          font-weight: 700;
+          letter-spacing: .1em;
+          color: var(--text-muted);
+          font-weight: 600;
           font-size: .72rem;
-          margin-bottom: .25rem;
+          margin-bottom: .35rem;
         }
+
         .chip-row {
           display: flex;
           flex-wrap: wrap;
-          gap: .42rem;
-          margin-top: .35rem;
+          gap: .5rem;
+          margin-top: .5rem;
+          margin-bottom: .6rem;
         }
+
         .chip {
           border-radius: 999px;
-          padding: .2rem .62rem;
-          border: 1px solid rgba(166, 183, 216, .30);
-          background: rgba(174, 185, 207, .10);
-          color: #D9E4FB;
+          padding: .24rem .66rem;
+          border: 1px solid var(--line);
+          background: var(--surface-alt);
+          color: var(--text-muted);
           font-size: .78rem;
         }
+
         .card-shell {
-          border: 1px solid #2A3345;
-          border-radius: 14px;
-          background: linear-gradient(160deg, rgba(17, 24, 37, .95), rgba(13, 18, 29, .95));
-          box-shadow: 0 10px 28px rgba(0, 0, 0, .20);
-          padding: .85rem .9rem;
-          margin-bottom: .72rem;
-          min-height: 170px;
+          border: 1px solid var(--line);
+          border-radius: var(--radius-lg);
+          background: var(--surface);
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+          padding: var(--space-3);
+          margin-bottom: .85rem;
+          min-height: 176px;
         }
+
         .card-title {
           margin: 0;
-          color: #F6F8FF;
-          font-size: .98rem;
+          color: var(--text);
+          font-size: 1rem;
           line-height: 1.3;
-          font-weight: 700;
+          font-weight: 650;
         }
+
         .card-sub {
-          margin: .3rem 0 .45rem 0;
-          color: #B9C6DF;
-          font-size: .83rem;
+          margin: .32rem 0 .52rem 0;
+          color: var(--text-muted);
+          font-size: .86rem;
         }
+
         .card-meta {
-          color: #DCE6FA;
-          font-size: .82rem;
-          margin-top: .24rem;
+          color: var(--text);
+          font-size: .84rem;
+          margin-top: .2rem;
+          line-height: 1.45;
         }
+
         .card-tags {
           display: flex;
           flex-wrap: wrap;
-          gap: .35rem;
-          margin-top: .52rem;
+          gap: .36rem;
+          margin-top: .56rem;
         }
+
         .card-tag {
           font-size: .74rem;
-          color: #C5D4F0;
-          border: 1px solid rgba(95, 123, 177, .45);
-          background: rgba(86, 116, 173, .13);
+          color: var(--text-muted);
+          border: 1px solid var(--line);
+          background: var(--surface-alt);
           border-radius: 999px;
-          padding: .15rem .5rem;
+          padding: .16rem .5rem;
         }
+
         [data-testid="stMetric"] {
-          border: 1px solid #2A3345;
-          border-radius: 14px;
-          background: linear-gradient(160deg, rgba(18, 25, 38, .72), rgba(13, 18, 29, .72));
-          padding: .58rem .7rem;
+          border: 1px solid var(--line);
+          border-radius: var(--radius-md);
+          background: var(--surface);
+          padding: .7rem .8rem;
+          box-shadow: none;
         }
+
         [data-testid="stMetricLabel"] p {
-          font-weight: 600;
-          color: #9DB0D3;
+          font-weight: 500;
+          color: var(--text-muted);
         }
+
         [data-testid="stMetricValue"] {
-          color: #F6F8FF;
-          font-weight: 750;
-        }
-        .stButton > button, .stDownloadButton > button {
+          color: var(--text);
           font-weight: 650;
-          border-width: 1px;
+        }
+
+        .stButton > button,
+        .stDownloadButton > button,
+        [data-testid="stFormSubmitButton"] button {
+          border-radius: var(--radius-md);
+          min-height: 42px;
+          font-weight: 600;
+          border: 1px solid var(--line-strong);
+          background: var(--surface);
+          color: var(--text);
+          transition: all .15s ease;
+        }
+
+        .stButton > button[kind="primary"],
+        [data-testid="stFormSubmitButton"] button[kind="primary"] {
+          background: #000000;
+          color: #FFFFFF;
+          border-color: #000000;
+        }
+
+        .stButton > button:hover,
+        .stDownloadButton > button:hover,
+        [data-testid="stFormSubmitButton"] button:hover {
+          border-color: #000000;
+          color: #000000;
+          transform: translateY(-1px);
+        }
+
+        .stButton > button[kind="primary"]:hover,
+        [data-testid="stFormSubmitButton"] button[kind="primary"]:hover {
+          background: #1B1B1B;
+          color: #FFFFFF;
+        }
+
+        [data-baseweb="input"] input,
+        [data-baseweb="textarea"] textarea {
+          background: #FFFFFF !important;
+          border-radius: var(--radius-md) !important;
+          border: 1px solid var(--line) !important;
+          color: var(--text) !important;
+        }
+
+        [data-baseweb="input"] input:focus,
+        [data-baseweb="textarea"] textarea:focus {
+          border-color: #000000 !important;
+          box-shadow: none !important;
+        }
+
+        [data-baseweb="select"] > div {
+          border-radius: var(--radius-md) !important;
+          border: 1px solid var(--line) !important;
+          background: #FFFFFF !important;
+        }
+
+        [data-baseweb="popover"] [role="listbox"] {
+          border: 1px solid var(--line);
+          border-radius: var(--radius-md);
+        }
+
+        [data-baseweb="slider"] [role="slider"] {
+          background: #000000 !important;
+          border: 2px solid #FFFFFF !important;
+          box-shadow: 0 0 0 1px #000000 !important;
+          width: 16px !important;
+          height: 16px !important;
+        }
+
+        [data-baseweb="slider"] > div > div:first-child {
+          background: #DADADA !important;
+          height: 3px !important;
+        }
+
+        [data-baseweb="slider"] > div > div:nth-child(2) {
+          background: #000000 !important;
+          height: 3px !important;
+        }
+
+        [data-testid="stExpander"] {
+          border: 1px solid var(--line);
+          border-radius: var(--radius-md);
+          background: #FFFFFF;
+        }
+
+        [data-testid="stDataFrame"],
+        [data-testid="stTable"] {
+          border: 1px solid var(--line);
+          border-radius: var(--radius-lg);
+          overflow: hidden;
+          background: #FFFFFF;
+        }
+
+        [data-testid="stDataFrame"] * {
+          font-size: .88rem !important;
+        }
+
+        .pager-center {
+          text-align: center;
+          padding-top: .45rem;
+          color: var(--text-muted);
+          font-size: .92rem;
+        }
+
+        .pager-center strong {
+          color: var(--text);
+          font-weight: 650;
+        }
+
+        @media (max-width: 1080px) {
+          .block-container {
+            padding-top: 1.2rem;
+          }
+          .hero-shell,
+          .panel-shell {
+            padding: var(--space-3);
+          }
         }
         </style>
         """,
@@ -737,8 +896,8 @@ def show_business_detail_dialog(business: dict[str, Any], services: list[dict[st
 
 def main() -> None:
     st.set_page_config(
-        page_title="Neumor Directory Atelier",
-        page_icon="sparkles",
+        page_title="Neumor Directory",
+        page_icon="🔎",
         layout="wide",
         initial_sidebar_state="expanded",
     )
@@ -801,11 +960,11 @@ def main() -> None:
     st.markdown(
         """
         <div class="hero-shell">
-          <div class="hero-kicker">NEUMOR DB · SERVICE DISCOVERY</div>
-          <h1 class="hero-title">Buscador inteligente de negocios y servicios</h1>
+          <div class="hero-kicker">NEUMOR DIRECTORY</div>
+          <h1 class="hero-title">Busqueda de negocios y servicios</h1>
           <div class="hero-sub">
-            Interfaz optimizada para explorar por tarjetas y abrir detalle en modal.
-            Por defecto verás tarjetas de negocios para una navegación más clara.
+            Explora resultados con una interfaz limpia, filtros precisos y lectura clara en tarjetas o tabla.
+            Todas las funciones de busqueda, orden, paginacion y exportacion se mantienen activas.
           </div>
         </div>
         """,
@@ -1088,7 +1247,7 @@ def main() -> None:
         clear_selected_details()
         st.rerun()
     nav2.markdown(
-        f"<div style='text-align:center;padding-top:.45rem;'>Página <strong>{page}</strong> de <strong>{total_pages}</strong></div>",
+        f"<div class='pager-center'>Pagina <strong>{page}</strong> de <strong>{total_pages}</strong></div>",
         unsafe_allow_html=True,
     )
     if nav3.button("Siguiente", disabled=(page >= total_pages), use_container_width=True):
