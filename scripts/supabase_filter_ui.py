@@ -29,6 +29,7 @@ PRICE_KIND_OPTIONS: list[tuple[str, str]] = [
 ]
 VIEW_MODE_OPTIONS = ["Tarjetas", "Tabla"]
 CARD_SCOPE_OPTIONS = ["Negocios", "Servicios"]
+THEME_MODE_OPTIONS = ["Claro", "Oscuro"]
 CLIENT_SORT_LABELS = {
     "Precio: menor a mayor",
     "Precio: mayor a menor",
@@ -64,19 +65,53 @@ DEFAULT_STATE: dict[str, Any] = {
 }
 
 
-def inject_styles() -> None:
+def inject_styles(theme_mode: str) -> None:
+    is_dark = theme_mode == "Oscuro"
+    palette = {
+        "bg": "#090909" if is_dark else "#FFFFFF",
+        "bg_soft": "#101010" if is_dark else "#FAFAFA",
+        "text": "#F5F5F5" if is_dark else "#000000",
+        "text_muted": "#B8B8B8" if is_dark else "#4A4A4A",
+        "line": "#2A2A2A" if is_dark else "#E4E4E4",
+        "line_strong": "#4D4D4D" if is_dark else "#BFBFBF",
+        "surface": "#121212" if is_dark else "#FFFFFF",
+        "surface_alt": "#191919" if is_dark else "#F7F7F7",
+        "header_bg": "rgba(12, 12, 12, 0.88)" if is_dark else "rgba(255, 255, 255, 0.9)",
+        "shadow": "0 1px 2px rgba(0, 0, 0, 0.28)" if is_dark else "0 1px 2px rgba(0, 0, 0, 0.05)",
+        "focus": "#FFFFFF" if is_dark else "#000000",
+        "slider_track": "#3A3A3A" if is_dark else "#DADADA",
+        "slider_fill": "#F2F2F2" if is_dark else "#000000",
+        "slider_knob_bg": "#F2F2F2" if is_dark else "#000000",
+        "slider_knob_border": "#121212" if is_dark else "#FFFFFF",
+        "slider_knob_outline": "#F2F2F2" if is_dark else "#000000",
+        "btn_primary_bg": "#FFFFFF" if is_dark else "#000000",
+        "btn_primary_text": "#000000" if is_dark else "#FFFFFF",
+        "btn_primary_hover": "#E8E8E8" if is_dark else "#1B1B1B",
+    }
+
     st.markdown(
-        """
+        f"""
         <style>
-        :root {
-          --bg: #FFFFFF;
-          --bg-soft: #FAFAFA;
-          --text: #000000;
-          --text-muted: #4A4A4A;
-          --line: #E4E4E4;
-          --line-strong: #BFBFBF;
-          --surface: #FFFFFF;
-          --surface-alt: #F7F7F7;
+        :root {{
+          --bg: {palette["bg"]};
+          --bg-soft: {palette["bg_soft"]};
+          --text: {palette["text"]};
+          --text-muted: {palette["text_muted"]};
+          --line: {palette["line"]};
+          --line-strong: {palette["line_strong"]};
+          --surface: {palette["surface"]};
+          --surface-alt: {palette["surface_alt"]};
+          --header-bg: {palette["header_bg"]};
+          --shadow-sm: {palette["shadow"]};
+          --focus: {palette["focus"]};
+          --slider-track: {palette["slider_track"]};
+          --slider-fill: {palette["slider_fill"]};
+          --slider-knob-bg: {palette["slider_knob_bg"]};
+          --slider-knob-border: {palette["slider_knob_border"]};
+          --slider-knob-outline: {palette["slider_knob_outline"]};
+          --btn-primary-bg: {palette["btn_primary_bg"]};
+          --btn-primary-text: {palette["btn_primary_text"]};
+          --btn-primary-hover: {palette["btn_primary_hover"]};
           --radius-lg: 14px;
           --radius-md: 10px;
           --space-1: .5rem;
@@ -84,174 +119,189 @@ def inject_styles() -> None:
           --space-3: 1rem;
           --space-4: 1.5rem;
           --space-5: 2rem;
-        }
+        }}
 
-        html, body, [class*="css"], [data-testid="stMarkdownContainer"] p,
-        [data-testid="stSidebar"], .stTextInput, .stSelectbox, .stMultiSelect, .stSlider {
+        html, body, [class*="css"], [data-testid="stSidebar"],
+        .stTextInput, .stSelectbox, .stMultiSelect, .stSlider {{
           font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
-          color: var(--text);
-        }
+        }}
 
-        [data-testid="stAppViewContainer"] {
-          background: var(--bg-soft);
-        }
+        [data-testid="stAppViewContainer"] {{
+          background: var(--bg-soft) !important;
+        }}
 
-        [data-testid="stHeader"] {
-          background: rgba(255, 255, 255, 0.85);
+        [data-testid="stHeader"] {{
+          background: var(--header-bg);
           border-bottom: 1px solid var(--line);
           backdrop-filter: blur(8px);
-        }
+        }}
 
-        [data-testid="stSidebar"] > div:first-child {
+        [data-testid="stSidebar"] > div:first-child {{
           background: var(--surface);
           border-right: 1px solid var(--line);
-        }
+        }}
 
-        .block-container {
+        .block-container {{
           max-width: 1240px;
           padding-top: 2rem;
           padding-bottom: 2rem;
-        }
+        }}
 
-        h1, h2, h3, h4 {
-          font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
-          color: var(--text);
-          letter-spacing: -0.01em;
-        }
+        [data-testid="stMarkdownContainer"] h1,
+        [data-testid="stMarkdownContainer"] h2,
+        [data-testid="stMarkdownContainer"] h3,
+        [data-testid="stMarkdownContainer"] h4,
+        [data-testid="stMarkdownContainer"] p,
+        [data-testid="stMarkdownContainer"] li,
+        [data-testid="stWidgetLabel"] p,
+        label p {{
+          color: var(--text) !important;
+        }}
 
-        .hero-shell {
+        [data-testid="stCaptionContainer"] p,
+        [data-testid="stCaptionContainer"] {{
+          color: var(--text-muted) !important;
+        }}
+
+        .hero-shell {{
           border: 1px solid var(--line);
           border-radius: var(--radius-lg);
           background: var(--surface);
+          box-shadow: var(--shadow-sm);
           padding: var(--space-5);
           margin-bottom: var(--space-4);
-        }
+        }}
 
-        .hero-kicker {
+        .hero-kicker {{
           text-transform: uppercase;
           letter-spacing: .12em;
-          color: var(--text-muted);
+          color: var(--text-muted) !important;
           font-weight: 600;
           font-size: .72rem;
-        }
+        }}
 
-        .hero-title {
+        .hero-title {{
           margin: .35rem 0 .65rem 0;
           font-size: clamp(1.6rem, 2.6vw, 2.2rem);
           line-height: 1.12;
-          color: var(--text);
+          color: var(--text) !important;
           font-weight: 700;
-        }
+          letter-spacing: -0.012em;
+        }}
 
-        .hero-sub {
-          color: var(--text-muted);
+        .hero-sub {{
+          color: var(--text-muted) !important;
           font-size: .98rem;
           max-width: 860px;
           line-height: 1.6;
-        }
+        }}
 
-        .panel-shell {
+        .panel-shell {{
           border: 1px solid var(--line);
           border-radius: var(--radius-lg);
           background: var(--surface);
+          box-shadow: var(--shadow-sm);
           padding: var(--space-4);
           margin: var(--space-3) 0 var(--space-4) 0;
-        }
+        }}
 
-        .section-kicker {
+        .section-kicker {{
           text-transform: uppercase;
           letter-spacing: .1em;
-          color: var(--text-muted);
+          color: var(--text-muted) !important;
           font-weight: 600;
           font-size: .72rem;
           margin-bottom: .35rem;
-        }
+        }}
 
-        .chip-row {
+        .chip-row {{
           display: flex;
           flex-wrap: wrap;
           gap: .5rem;
           margin-top: .5rem;
           margin-bottom: .6rem;
-        }
+        }}
 
-        .chip {
+        .chip {{
           border-radius: 999px;
           padding: .24rem .66rem;
           border: 1px solid var(--line);
           background: var(--surface-alt);
           color: var(--text-muted);
           font-size: .78rem;
-        }
+        }}
 
-        .card-shell {
+        .card-shell {{
           border: 1px solid var(--line);
           border-radius: var(--radius-lg);
           background: var(--surface);
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+          box-shadow: var(--shadow-sm);
           padding: var(--space-3);
           margin-bottom: .85rem;
           min-height: 176px;
-        }
+        }}
 
-        .card-title {
+        .card-shell .card-title,
+        .card-shell .card-title * {{
           margin: 0;
-          color: var(--text);
-          font-size: 1rem;
+          color: var(--text) !important;
+          opacity: 1 !important;
+          font-size: 1.02rem;
           line-height: 1.3;
-          font-weight: 650;
-        }
+          font-weight: 700;
+        }}
 
-        .card-sub {
+        .card-sub {{
           margin: .32rem 0 .52rem 0;
-          color: var(--text-muted);
+          color: var(--text-muted) !important;
           font-size: .86rem;
-        }
+        }}
 
-        .card-meta {
-          color: var(--text);
+        .card-meta,
+        .card-meta * {{
+          color: var(--text) !important;
           font-size: .84rem;
           margin-top: .2rem;
           line-height: 1.45;
-        }
+        }}
 
-        .card-tags {
+        .card-tags {{
           display: flex;
           flex-wrap: wrap;
           gap: .36rem;
           margin-top: .56rem;
-        }
+        }}
 
-        .card-tag {
+        .card-tag {{
           font-size: .74rem;
-          color: var(--text-muted);
+          color: var(--text-muted) !important;
           border: 1px solid var(--line);
           background: var(--surface-alt);
           border-radius: 999px;
           padding: .16rem .5rem;
-        }
+        }}
 
-        [data-testid="stMetric"] {
+        [data-testid="stMetric"] {{
           border: 1px solid var(--line);
           border-radius: var(--radius-md);
           background: var(--surface);
           padding: .7rem .8rem;
           box-shadow: none;
-        }
+        }}
 
-        [data-testid="stMetricLabel"] p {
+        [data-testid="stMetricLabel"] p {{
           font-weight: 500;
-          color: var(--text-muted);
-        }
+          color: var(--text-muted) !important;
+        }}
 
-        [data-testid="stMetricValue"] {
-          color: var(--text);
-          font-weight: 650;
-        }
+        [data-testid="stMetricValue"] {{
+          color: var(--text) !important;
+          font-weight: 700;
+        }}
 
         .stButton > button,
         .stDownloadButton > button,
-        [data-testid="stFormSubmitButton"] button {
+        [data-testid="stFormSubmitButton"] button {{
           border-radius: var(--radius-md);
           min-height: 42px;
           font-weight: 600;
@@ -259,111 +309,125 @@ def inject_styles() -> None:
           background: var(--surface);
           color: var(--text);
           transition: all .15s ease;
-        }
+        }}
 
         .stButton > button[kind="primary"],
-        [data-testid="stFormSubmitButton"] button[kind="primary"] {
-          background: #000000;
-          color: #FFFFFF;
-          border-color: #000000;
-        }
+        [data-testid="stFormSubmitButton"] button[kind="primary"] {{
+          background: var(--btn-primary-bg);
+          color: var(--btn-primary-text);
+          border-color: var(--btn-primary-bg);
+        }}
 
         .stButton > button:hover,
         .stDownloadButton > button:hover,
-        [data-testid="stFormSubmitButton"] button:hover {
-          border-color: #000000;
-          color: #000000;
+        [data-testid="stFormSubmitButton"] button:hover {{
+          border-color: var(--focus);
+          color: var(--text);
           transform: translateY(-1px);
-        }
+        }}
 
         .stButton > button[kind="primary"]:hover,
-        [data-testid="stFormSubmitButton"] button[kind="primary"]:hover {
-          background: #1B1B1B;
-          color: #FFFFFF;
-        }
+        [data-testid="stFormSubmitButton"] button[kind="primary"]:hover {{
+          background: var(--btn-primary-hover);
+          color: var(--btn-primary-text);
+        }}
 
         [data-baseweb="input"] input,
-        [data-baseweb="textarea"] textarea {
-          background: #FFFFFF !important;
+        [data-baseweb="textarea"] textarea {{
+          background: var(--surface) !important;
           border-radius: var(--radius-md) !important;
           border: 1px solid var(--line) !important;
           color: var(--text) !important;
-        }
+        }}
+
+        [data-baseweb="input"] input::placeholder,
+        [data-baseweb="textarea"] textarea::placeholder {{
+          color: var(--text-muted) !important;
+          opacity: .9 !important;
+        }}
 
         [data-baseweb="input"] input:focus,
-        [data-baseweb="textarea"] textarea:focus {
-          border-color: #000000 !important;
+        [data-baseweb="textarea"] textarea:focus {{
+          border-color: var(--focus) !important;
           box-shadow: none !important;
-        }
+        }}
 
-        [data-baseweb="select"] > div {
+        [data-baseweb="select"] > div {{
           border-radius: var(--radius-md) !important;
           border: 1px solid var(--line) !important;
-          background: #FFFFFF !important;
-        }
+          background: var(--surface) !important;
+          color: var(--text) !important;
+        }}
 
-        [data-baseweb="popover"] [role="listbox"] {
+        [data-baseweb="popover"] [role="listbox"] {{
           border: 1px solid var(--line);
           border-radius: var(--radius-md);
-        }
+          background: var(--surface);
+          color: var(--text);
+        }}
 
-        [data-baseweb="slider"] [role="slider"] {
-          background: #000000 !important;
-          border: 2px solid #FFFFFF !important;
-          box-shadow: 0 0 0 1px #000000 !important;
+        [role="radiogroup"] label p {{
+          color: var(--text) !important;
+        }}
+
+        [data-baseweb="slider"] [role="slider"] {{
+          background: var(--slider-knob-bg) !important;
+          border: 2px solid var(--slider-knob-border) !important;
+          box-shadow: 0 0 0 1px var(--slider-knob-outline) !important;
           width: 16px !important;
           height: 16px !important;
-        }
+        }}
 
-        [data-baseweb="slider"] > div > div:first-child {
-          background: #DADADA !important;
+        [data-baseweb="slider"] > div > div:first-child {{
+          background: var(--slider-track) !important;
           height: 3px !important;
-        }
+        }}
 
-        [data-baseweb="slider"] > div > div:nth-child(2) {
-          background: #000000 !important;
+        [data-baseweb="slider"] > div > div:nth-child(2) {{
+          background: var(--slider-fill) !important;
           height: 3px !important;
-        }
+        }}
 
-        [data-testid="stExpander"] {
+        [data-testid="stExpander"] {{
           border: 1px solid var(--line);
           border-radius: var(--radius-md);
-          background: #FFFFFF;
-        }
+          background: var(--surface);
+        }}
 
         [data-testid="stDataFrame"],
-        [data-testid="stTable"] {
+        [data-testid="stTable"] {{
           border: 1px solid var(--line);
           border-radius: var(--radius-lg);
           overflow: hidden;
-          background: #FFFFFF;
-        }
+          background: var(--surface);
+        }}
 
-        [data-testid="stDataFrame"] * {
+        [data-testid="stDataFrame"] * {{
           font-size: .88rem !important;
-        }
+          color: var(--text) !important;
+        }}
 
-        .pager-center {
+        .pager-center {{
           text-align: center;
           padding-top: .45rem;
           color: var(--text-muted);
           font-size: .92rem;
-        }
+        }}
 
-        .pager-center strong {
+        .pager-center strong {{
           color: var(--text);
           font-weight: 650;
-        }
+        }}
 
-        @media (max-width: 1080px) {
-          .block-container {
+        @media (max-width: 1080px) {{
+          .block-container {{
             padding-top: 1.2rem;
-          }
+          }}
           .hero-shell,
-          .panel-shell {
+          .panel-shell {{
             padding: var(--space-3);
-          }
-        }
+          }}
+        }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -374,6 +438,8 @@ def init_state() -> None:
     for key, value in DEFAULT_STATE.items():
         if key not in st.session_state:
             st.session_state[key] = value
+    if st.session_state.get("ui_theme_mode") not in THEME_MODE_OPTIONS:
+        st.session_state["ui_theme_mode"] = THEME_MODE_OPTIONS[0]
     if st.session_state.get("f_view_mode") not in VIEW_MODE_OPTIONS:
         st.session_state["f_view_mode"] = VIEW_MODE_OPTIONS[0]
     if st.session_state.get("f_card_scope") not in CARD_SCOPE_OPTIONS:
@@ -902,7 +968,6 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
     init_state()
-    inject_styles()
 
     supabase_url = read_setting("SUPABASE_URL")
     api_key = (
@@ -914,6 +979,7 @@ def main() -> None:
     with st.sidebar:
         st.markdown("### Neumor Directory")
         st.caption("Panel de control para búsqueda y filtrado.")
+        st.selectbox("Tema", options=THEME_MODE_OPTIONS, key="ui_theme_mode")
         with st.expander("Conexion", expanded=not bool(supabase_url and api_key)):
             supabase_url = st.text_input(
                 "SUPABASE_URL",
@@ -926,6 +992,8 @@ def main() -> None:
                 type="password",
                 placeholder="anon o service role",
             )
+
+    inject_styles(st.session_state.get("ui_theme_mode", THEME_MODE_OPTIONS[0]))
 
     if not supabase_url or not api_key:
         st.warning("Configura SUPABASE_URL y API key para continuar.")
