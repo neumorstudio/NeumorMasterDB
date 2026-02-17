@@ -28,6 +28,7 @@ PRICE_KIND_OPTIONS: list[tuple[str, str]] = [
     ("Consultar", "quote"),
 ]
 VIEW_MODE_OPTIONS = ["Tarjetas", "Tabla"]
+CARD_SCOPE_OPTIONS = ["Negocios", "Servicios"]
 
 DEFAULT_STATE: dict[str, Any] = {
     "f_search": "",
@@ -42,6 +43,7 @@ DEFAULT_STATE: dict[str, Any] = {
     "f_sort_label": SORT_OPTIONS[0][0],
     "f_page_size": PAGE_SIZE_OPTIONS[0],
     "f_view_mode": VIEW_MODE_OPTIONS[0],
+    "f_card_scope": CARD_SCOPE_OPTIONS[0],  # Negocios por defecto
     "page": 1,
 }
 
@@ -129,39 +131,39 @@ def inject_styles() -> None:
           color: #D9E4FB;
           font-size: .78rem;
         }
-        .service-card {
+        .card-shell {
           border: 1px solid #2A3345;
           border-radius: 14px;
           background: linear-gradient(160deg, rgba(17, 24, 37, .95), rgba(13, 18, 29, .95));
           box-shadow: 0 10px 28px rgba(0, 0, 0, .20);
           padding: .85rem .9rem;
           margin-bottom: .72rem;
-          min-height: 156px;
+          min-height: 170px;
         }
-        .service-title {
+        .card-title {
           margin: 0;
           color: #F6F8FF;
           font-size: .98rem;
           line-height: 1.3;
           font-weight: 700;
         }
-        .service-business {
+        .card-sub {
           margin: .3rem 0 .45rem 0;
           color: #B9C6DF;
           font-size: .83rem;
         }
-        .service-meta {
+        .card-meta {
           color: #DCE6FA;
           font-size: .82rem;
           margin-top: .24rem;
         }
-        .service-tags {
+        .card-tags {
           display: flex;
           flex-wrap: wrap;
           gap: .35rem;
           margin-top: .52rem;
         }
-        .service-tag {
+        .card-tag {
           font-size: .74rem;
           color: #C5D4F0;
           border: 1px solid rgba(95, 123, 177, .45);
@@ -199,6 +201,8 @@ def init_state() -> None:
             st.session_state[key] = value
     if st.session_state.get("f_view_mode") not in VIEW_MODE_OPTIONS:
         st.session_state["f_view_mode"] = VIEW_MODE_OPTIONS[0]
+    if st.session_state.get("f_card_scope") not in CARD_SCOPE_OPTIONS:
+        st.session_state["f_card_scope"] = CARD_SCOPE_OPTIONS[0]
     valid_sort_labels = {label for label, _ in SORT_OPTIONS}
     if st.session_state.get("f_sort_label") not in valid_sort_labels:
         st.session_state["f_sort_label"] = SORT_OPTIONS[0][0]
@@ -210,6 +214,12 @@ def reset_filters() -> None:
     for key, value in DEFAULT_STATE.items():
         st.session_state[key] = value
     st.session_state["last_filter_signature"] = None
+    clear_selected_details()
+
+
+def clear_selected_details() -> None:
+    st.session_state.pop("selected_service_detail", None)
+    st.session_state.pop("selected_business_detail", None)
 
 
 def read_setting(name: str) -> str:
@@ -220,7 +230,7 @@ def read_setting(name: str) -> str:
         secret_value = st.secrets.get(name, "")
         if isinstance(secret_value, str):
             return secret_value.strip()
-    except Exception:  # noqa: BLE001 - st.secrets puede no existir localmente
+    except Exception:  # noqa: BLE001
         return ""
     return ""
 
@@ -235,7 +245,6 @@ def fetch_reference_data(base_url: str, api_key: str) -> tuple[list[dict[str, st
         timeout=20,
     )
     bt_resp.raise_for_status()
-
     sc_resp = requests.get(
         f"{base_url}/rest/v1/service_categories",
         headers=headers,
@@ -243,7 +252,6 @@ def fetch_reference_data(base_url: str, api_key: str) -> tuple[list[dict[str, st
         timeout=20,
     )
     sc_resp.raise_for_status()
-
     return bt_resp.json(), sc_resp.json()
 
 
@@ -272,21 +280,18 @@ def build_filters(
     if search.strip():
         q = search.strip().replace(",", " ")
         params.append(("or", f"(business_name.ilike.*{q}*,service_name.ilike.*{q}*)"))
-
     if country_code.strip():
         params.append(("country_code", f"eq.{country_code.strip().upper()}"))
     if city_like.strip():
         params.append(("city", f"ilike.*{city_like.strip().replace(',', ' ')}*"))
     if region_like.strip():
         params.append(("region", f"ilike.*{region_like.strip().replace(',', ' ')}*"))
-
     if business_types:
         params.append(("business_type_code", f"in.({','.join(business_types)})"))
     if categories:
         params.append(("service_category_code", f"in.({','.join(categories)})"))
     if price_kinds:
         params.append(("price_kind", f"in.({','.join(price_kinds)})"))
-
     if min_price is not None:
         params.append(("price_cents", f"gte.{min_price}"))
     if max_price is not None:
@@ -329,7 +334,6 @@ def fetch_rows(
             total = int(content_range.rsplit("/", 1)[1])
         except ValueError:
             total = 0
-
     return resp.json(), total
 
 
@@ -411,6 +415,45 @@ def render_active_chips(items: list[str]) -> None:
     st.markdown(f"<div class='chip-row'>{chips_html}</div>", unsafe_allow_html=True)
 
 
+def build_business_cards(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[str, dict[str, Any]] = {}
+    for idx, row in enumerate(rows):
+        business_id = str(row.get("business_id") or f"business-{idx}")
+        business_name = str(row.get("business_name") or "Negocio sin nombre")
+        key = f"{business_id}|{business_name}"
+
+        if key not in grouped:
+            grouped[key] = {
+                "business_id": row.get("business_id"),
+                "business_name": business_name,
+                "business_type_label": row.get("business_type_label") or row.get("business_type_code") or "-",
+                "country_code": row.get("country_code"),
+                "region": row.get("region"),
+                "city": row.get("city"),
+                "services": [],
+                "min_price_cents": None,
+                "max_price_cents": None,
+                "categories": set(),
+            }
+
+        bucket = grouped[key]
+        bucket["services"].append(dict(row))
+        category_label = row.get("service_category_label") or row.get("service_category_code")
+        if category_label:
+            bucket["categories"].add(str(category_label))
+
+        price = row.get("price_cents")
+        if isinstance(price, int):
+            if bucket["min_price_cents"] is None or price < bucket["min_price_cents"]:
+                bucket["min_price_cents"] = price
+            if bucket["max_price_cents"] is None or price > bucket["max_price_cents"]:
+                bucket["max_price_cents"] = price
+
+    businesses = list(grouped.values())
+    businesses.sort(key=lambda b: (-(len(b["services"])), str(b["business_name"]).lower()))
+    return businesses
+
+
 def render_service_cards(rows: list[dict[str, Any]]) -> None:
     cols = st.columns(2, gap="medium")
     for idx, row in enumerate(rows):
@@ -420,41 +463,79 @@ def render_service_cards(rows: list[dict[str, Any]]) -> None:
         region = html.escape(str(row.get("region") or "-"))
         category = html.escape(str(row.get("service_category_label") or row.get("service_category_code") or "Sin categoria"))
         business_type = html.escape(str(row.get("business_type_label") or row.get("business_type_code") or "Sin tipo"))
-        duration = (
-            f"{row.get('duration_minutes')} min"
-            if row.get("duration_minutes") is not None
-            else "Duracion no informada"
-        )
+        duration = f"{row.get('duration_minutes')} min" if row.get("duration_minutes") is not None else "Duracion no informada"
         price_label = html.escape(format_service_price(row))
+
         card = (
-            "<div class='service-card'>"
-            f"<h4 class='service-title'>{service_name}</h4>"
-            f"<div class='service-business'>{business_name}</div>"
-            f"<div class='service-meta'><strong>Precio:</strong> {price_label}</div>"
-            f"<div class='service-meta'><strong>Duracion:</strong> {html.escape(duration)}</div>"
-            f"<div class='service-meta'><strong>Ubicacion:</strong> {city} · {region}</div>"
-            "<div class='service-tags'>"
-            f"<span class='service-tag'>{category}</span>"
-            f"<span class='service-tag'>{business_type}</span>"
+            "<div class='card-shell'>"
+            f"<h4 class='card-title'>{service_name}</h4>"
+            f"<div class='card-sub'>{business_name}</div>"
+            f"<div class='card-meta'><strong>Precio:</strong> {price_label}</div>"
+            f"<div class='card-meta'><strong>Duracion:</strong> {html.escape(duration)}</div>"
+            f"<div class='card-meta'><strong>Ubicacion:</strong> {city} · {region}</div>"
+            "<div class='card-tags'>"
+            f"<span class='card-tag'>{category}</span>"
+            f"<span class='card-tag'>{business_type}</span>"
             "</div>"
             "</div>"
         )
         with cols[idx % 2]:
             st.markdown(card, unsafe_allow_html=True)
             service_key = str(row.get("service_id") or f"{row.get('business_id') or 'negocio'}-{idx}")
-            if st.button("Ver detalle", key=f"detail_{service_key}_{idx}", use_container_width=True):
+            if st.button("Ver detalle servicio", key=f"detail_service_{service_key}_{idx}", use_container_width=True):
                 st.session_state["selected_service_detail"] = dict(row)
+                st.session_state.pop("selected_business_detail", None)
 
 
-def clear_selected_service_detail() -> None:
-    st.session_state.pop("selected_service_detail", None)
+def render_business_cards(businesses: list[dict[str, Any]]) -> None:
+    cols = st.columns(2, gap="medium")
+    for idx, business in enumerate(businesses):
+        business_name = html.escape(str(business.get("business_name") or "Negocio sin nombre"))
+        business_type = html.escape(str(business.get("business_type_label") or "-"))
+        city = html.escape(str(business.get("city") or "-"))
+        region = html.escape(str(business.get("region") or "-"))
+        total_services = len(business.get("services", []))
+
+        min_price = business.get("min_price_cents")
+        max_price = business.get("max_price_cents")
+        if isinstance(min_price, int) and isinstance(max_price, int):
+            if min_price == max_price:
+                price_text = format_money(min_price, "EUR")
+            else:
+                price_text = f"{format_money(min_price, 'EUR')} - {format_money(max_price, 'EUR')}"
+        elif isinstance(min_price, int):
+            price_text = f"Desde {format_money(min_price, 'EUR')}"
+        else:
+            price_text = "Consultar"
+
+        categories = sorted(business.get("categories") or [])
+        category_badges = "".join(f"<span class='card-tag'>{html.escape(cat)}</span>" for cat in categories[:3])
+        if len(categories) > 3:
+            category_badges += f"<span class='card-tag'>+{len(categories)-3} más</span>"
+
+        card = (
+            "<div class='card-shell'>"
+            f"<h4 class='card-title'>{business_name}</h4>"
+            f"<div class='card-sub'>{business_type}</div>"
+            f"<div class='card-meta'><strong>Servicios filtrados:</strong> {total_services}</div>"
+            f"<div class='card-meta'><strong>Rango de precio:</strong> {html.escape(price_text)}</div>"
+            f"<div class='card-meta'><strong>Ubicacion:</strong> {city} · {region}</div>"
+            f"<div class='card-tags'>{category_badges or '<span class=\"card-tag\">Sin categoria</span>'}</div>"
+            "</div>"
+        )
+
+        with cols[idx % 2]:
+            st.markdown(card, unsafe_allow_html=True)
+            business_key = str(business.get("business_id") or f"business-{idx}")
+            if st.button("Ver detalle negocio", key=f"detail_business_{business_key}_{idx}", use_container_width=True):
+                st.session_state["selected_business_detail"] = dict(business)
+                st.session_state.pop("selected_service_detail", None)
 
 
-@st.dialog("Detalle del servicio", width="large", dismissible=True, on_dismiss=clear_selected_service_detail)
+@st.dialog("Detalle del servicio")
 def show_service_detail_dialog(row: dict[str, Any]) -> None:
     st.markdown(f"### {row.get('service_name') or 'Servicio sin nombre'}")
     st.caption(row.get("business_name") or "Negocio sin nombre")
-
     c1, c2 = st.columns(2)
     with c1:
         st.markdown(f"- **Tipo negocio:** {row.get('business_type_label') or row.get('business_type_code') or '-'}")
@@ -469,11 +550,56 @@ def show_service_detail_dialog(row: dict[str, Any]) -> None:
         st.markdown(f"- **Business ID:** `{row.get('business_id') or '-'}`")
         st.markdown(f"- **Service ID:** `{row.get('service_id') or '-'}`")
 
-    with st.expander("Ver todos los campos (raw)"):
+    with st.expander("Ver JSON completo"):
         st.json(row)
 
     if st.button("Cerrar", use_container_width=True, type="primary"):
-        clear_selected_service_detail()
+        st.session_state.pop("selected_service_detail", None)
+        st.rerun()
+
+
+@st.dialog("Detalle del negocio")
+def show_business_detail_dialog(business: dict[str, Any]) -> None:
+    st.markdown(f"### {business.get('business_name') or 'Negocio sin nombre'}")
+    st.caption(business.get("business_type_label") or "-")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown(f"- **Pais:** {business.get('country_code') or '-'}")
+        st.markdown(f"- **Region:** {business.get('region') or '-'}")
+        st.markdown(f"- **Ciudad:** {business.get('city') or '-'}")
+        st.markdown(f"- **Business ID:** `{business.get('business_id') or '-'}`")
+    with c2:
+        services = business.get("services", [])
+        st.markdown(f"- **Servicios filtrados:** {len(services)}")
+        min_price = business.get("min_price_cents")
+        max_price = business.get("max_price_cents")
+        if isinstance(min_price, int) and isinstance(max_price, int):
+            range_text = format_money(min_price, "EUR") if min_price == max_price else f"{format_money(min_price, 'EUR')} - {format_money(max_price, 'EUR')}"
+        else:
+            range_text = "Consultar"
+        st.markdown(f"- **Rango de precio:** {range_text}")
+        categories = sorted(list(business.get("categories") or []))
+        st.markdown(f"- **Categorias:** {', '.join(categories) if categories else '-'}")
+
+    services = business.get("services", [])
+    if services:
+        st.markdown("#### Servicios de este negocio (según filtros actuales)")
+        service_rows = [
+            {
+                "Servicio": s.get("service_name"),
+                "Categoria": s.get("service_category_label") or s.get("service_category_code"),
+                "Precio": format_service_price(s),
+                "Duracion": f"{s.get('duration_minutes')} min" if s.get("duration_minutes") is not None else "-",
+            }
+            for s in services
+        ]
+        st.dataframe(service_rows, use_container_width=True, hide_index=True)
+
+    with st.expander("Ver JSON completo del negocio"):
+        st.json(business)
+
+    if st.button("Cerrar", use_container_width=True, type="primary"):
+        st.session_state.pop("selected_business_detail", None)
         st.rerun()
 
 
@@ -530,7 +656,6 @@ def main() -> None:
         st.markdown("#### Ajustes de vista")
         st.selectbox("Orden", options=list(sort_map.keys()), key="f_sort_label")
         st.selectbox("Resultados por pagina", options=PAGE_SIZE_OPTIONS, key="f_page_size")
-
         if st.button("Limpiar todos los filtros", use_container_width=True):
             reset_filters()
             st.rerun()
@@ -541,8 +666,8 @@ def main() -> None:
           <div class="hero-kicker">NEUMOR DB · SERVICE DISCOVERY</div>
           <h1 class="hero-title">Buscador inteligente de negocios y servicios</h1>
           <div class="hero-sub">
-            Rebranding orientado a productividad: interfaz más limpia, flujo más guiado y resultados fáciles
-            de escanear. Todo el poder de filtros se mantiene, pero con una experiencia más intuitiva.
+            Interfaz optimizada para explorar por tarjetas y abrir detalle en modal.
+            Por defecto verás tarjetas de negocios para una navegación más clara.
           </div>
         </div>
         """,
@@ -553,6 +678,7 @@ def main() -> None:
         st.markdown("<div class='panel-shell'>", unsafe_allow_html=True)
         st.markdown("<div class='section-kicker'>Busqueda rapida</div>", unsafe_allow_html=True)
         st.markdown("Empieza con texto + ciudad. Ajusta precio/duracion y pulsa buscar.")
+
         q1, q2 = st.columns([2, 1])
         with q1:
             st.text_input(
@@ -619,6 +745,7 @@ def main() -> None:
     if filter_signature != st.session_state["last_filter_signature"]:
         st.session_state["page"] = 1
         st.session_state["last_filter_signature"] = filter_signature
+        clear_selected_details()
 
     params = build_filters(
         search=st.session_state["f_search"],
@@ -703,17 +830,27 @@ def main() -> None:
                 "Ciudad": row.get("city"),
                 "Pais": row.get("country_code"),
                 "Precio": format_service_price(row),
-                "Duracion": f"{row.get('duration_minutes')} min" if row.get("duration_minutes") else "-",
-                "business_id": row.get("business_id"),
-                "service_id": row.get("service_id"),
+                "Duracion": f"{row.get('duration_minutes')} min" if row.get("duration_minutes") is not None else "-",
             }
         )
 
     if view_mode == "Tarjetas":
-        render_service_cards(rows)
-
-    if view_mode == "Tabla":
+        card_scope = st.radio(
+            "Mostrar tarjetas de",
+            CARD_SCOPE_OPTIONS,
+            key="f_card_scope",
+            horizontal=True,
+        )
+        if card_scope == "Negocios":
+            render_business_cards(build_business_cards(rows))
+        else:
+            render_service_cards(rows)
+    else:
         st.dataframe(display_rows, use_container_width=True, hide_index=True)
+
+    selected_business_detail = st.session_state.get("selected_business_detail")
+    if isinstance(selected_business_detail, dict):
+        show_business_detail_dialog(selected_business_detail)
 
     selected_service_detail = st.session_state.get("selected_service_detail")
     if isinstance(selected_service_detail, dict):
@@ -722,6 +859,7 @@ def main() -> None:
     nav1, nav2, nav3 = st.columns([1, 2, 1])
     if nav1.button("Anterior", disabled=(page <= 1), use_container_width=True):
         st.session_state["page"] = max(1, page - 1)
+        clear_selected_details()
         st.rerun()
     nav2.markdown(
         f"<div style='text-align:center;padding-top:.45rem;'>Página <strong>{page}</strong> de <strong>{total_pages}</strong></div>",
@@ -729,6 +867,7 @@ def main() -> None:
     )
     if nav3.button("Siguiente", disabled=(page >= total_pages), use_container_width=True):
         st.session_state["page"] = min(total_pages, page + 1)
+        clear_selected_details()
         st.rerun()
 
     csv_payload = rows_to_csv(rows)
