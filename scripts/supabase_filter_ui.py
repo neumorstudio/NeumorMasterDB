@@ -12,6 +12,7 @@ from typing import Any
 
 import requests
 import streamlit as st
+import streamlit.components.v1 as components
 
 PAGE_SIZE_OPTIONS = [25, 50, 100, 200]
 SORT_OPTIONS: list[tuple[str, str]] = [
@@ -498,20 +499,77 @@ def inject_styles(theme_mode: str) -> None:
     )
 
 
-def apply_streamlit_theme(theme_mode: str) -> None:
-    if theme_mode == "Oscuro":
-        st._config.set_option("theme.base", "dark")
-        st._config.set_option("theme.primaryColor", "#F2F2F2")
-        st._config.set_option("theme.backgroundColor", "#090909")
-        st._config.set_option("theme.secondaryBackgroundColor", "#121212")
-        st._config.set_option("theme.textColor", "#F5F5F5")
-        return
+def inject_dataframe_theme_patch(theme_mode: str) -> None:
+    is_dark = theme_mode == "Oscuro"
+    header_bg = "#1A1A1A" if is_dark else "#F3F3F3"
+    header_bg_hover = "#222222" if is_dark else "#EBEBEB"
+    header_text = "#F5F5F5" if is_dark else "#111111"
+    cell_bg = "#121212" if is_dark else "#FFFFFF"
+    cell_bg_medium = "#191919" if is_dark else "#FFFFFF"
+    text_dark = "#F5F5F5" if is_dark else "#000000"
+    text_medium = "#B8B8B8" if is_dark else "rgba(0, 0, 0, 0.8)"
+    text_light = "#909090" if is_dark else "rgba(0, 0, 0, 0.4)"
+    border = "#2A2A2A" if is_dark else "rgba(0, 0, 0, 0.1)"
 
-    st._config.set_option("theme.base", "light")
-    st._config.set_option("theme.primaryColor", "#000000")
-    st._config.set_option("theme.backgroundColor", "#FFFFFF")
-    st._config.set_option("theme.secondaryBackgroundColor", "#F7F7F7")
-    st._config.set_option("theme.textColor", "#000000")
+    components.html(
+        f"""
+        <script>
+          (function() {{
+            const doc = window.parent.document;
+            const vars = {{
+              bgHeader: "{header_bg}",
+              bgHeaderHover: "{header_bg_hover}",
+              textHeader: "{header_text}",
+              bgCell: "{cell_bg}",
+              bgCellMedium: "{cell_bg_medium}",
+              textDark: "{text_dark}",
+              textMedium: "{text_medium}",
+              textLight: "{text_light}",
+              border: "{border}",
+            }};
+
+            function applyThemeToDataframes() {{
+              const targets = doc.querySelectorAll(
+                '[data-testid="stDataFrame"] [style*="--gdg-bg-header"], [data-testid="stDataFrame"] [style*="--gdg-accent-color"]'
+              );
+              targets.forEach((el) => {{
+                el.style.setProperty("--gdg-bg-header", vars.bgHeader);
+                el.style.setProperty("--gdg-bg-header-hovered", vars.bgHeaderHover);
+                el.style.setProperty("--gdg-bg-header-has-focus", vars.bgHeaderHover);
+                el.style.setProperty("--gdg-text-header", vars.textHeader);
+                el.style.setProperty("--gdg-bg-icon-header", vars.textHeader);
+                el.style.setProperty("--gdg-fg-icon-header", vars.textHeader);
+                el.style.setProperty("--gdg-bg-cell", vars.bgCell);
+                el.style.setProperty("--gdg-bg-cell-medium", vars.bgCellMedium);
+                el.style.setProperty("--gdg-text-dark", vars.textDark);
+                el.style.setProperty("--gdg-text-medium", vars.textMedium);
+                el.style.setProperty("--gdg-text-light", vars.textLight);
+                el.style.setProperty("--gdg-border-color", vars.border);
+                el.style.setProperty("--gdg-horizontal-border-color", vars.border);
+                el.style.setProperty("--gdg-vertical-border-color", vars.border);
+              }});
+            }}
+
+            applyThemeToDataframes();
+
+            let ticks = 0;
+            const interval = setInterval(() => {{
+              applyThemeToDataframes();
+              ticks += 1;
+              if (ticks > 40) {{
+                clearInterval(interval);
+              }}
+            }}, 100);
+
+            const observer = new MutationObserver(() => applyThemeToDataframes());
+            observer.observe(doc.body, {{ childList: true, subtree: true }});
+            setTimeout(() => observer.disconnect(), 4500);
+          }})();
+        </script>
+        """,
+        height=0,
+        width=0,
+    )
 
 
 def init_state() -> None:
@@ -1057,8 +1115,8 @@ def main() -> None:
     if st.session_state.get("last_applied_theme_mode") != current_theme:
         st.session_state["last_applied_theme_mode"] = current_theme
         clear_selected_details()
-    apply_streamlit_theme(current_theme)
     inject_styles(current_theme)
+    inject_dataframe_theme_patch(current_theme)
 
     supabase_url = read_setting("SUPABASE_URL")
     api_key = (
