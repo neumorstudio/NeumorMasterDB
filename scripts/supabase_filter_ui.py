@@ -27,7 +27,7 @@ PRICE_KIND_OPTIONS: list[tuple[str, str]] = [
     ("Rango", "range"),
     ("Consultar", "quote"),
 ]
-VIEW_MODE_OPTIONS = ["Tarjetas", "Mixta", "Tabla"]
+VIEW_MODE_OPTIONS = ["Tarjetas", "Tabla"]
 
 DEFAULT_STATE: dict[str, Any] = {
     "f_search": "",
@@ -441,6 +441,40 @@ def render_service_cards(rows: list[dict[str, Any]]) -> None:
         )
         with cols[idx % 2]:
             st.markdown(card, unsafe_allow_html=True)
+            service_key = str(row.get("service_id") or f"{row.get('business_id') or 'negocio'}-{idx}")
+            if st.button("Ver detalle", key=f"detail_{service_key}_{idx}", use_container_width=True):
+                st.session_state["selected_service_detail"] = dict(row)
+
+
+def clear_selected_service_detail() -> None:
+    st.session_state.pop("selected_service_detail", None)
+
+
+@st.dialog("Detalle del servicio", width="large", dismissible=True, on_dismiss=clear_selected_service_detail)
+def show_service_detail_dialog(row: dict[str, Any]) -> None:
+    st.markdown(f"### {row.get('service_name') or 'Servicio sin nombre'}")
+    st.caption(row.get("business_name") or "Negocio sin nombre")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown(f"- **Tipo negocio:** {row.get('business_type_label') or row.get('business_type_code') or '-'}")
+        st.markdown(f"- **Categoria:** {row.get('service_category_label') or row.get('service_category_code') or '-'}")
+        st.markdown(f"- **Precio:** {format_service_price(row)}")
+        st.markdown(f"- **Tipo de precio:** {row.get('price_kind') or '-'}")
+        st.markdown(f"- **Duracion:** {row.get('duration_minutes') if row.get('duration_minutes') is not None else '-'} min")
+    with c2:
+        st.markdown(f"- **Pais:** {row.get('country_code') or '-'}")
+        st.markdown(f"- **Region:** {row.get('region') or '-'}")
+        st.markdown(f"- **Ciudad:** {row.get('city') or '-'}")
+        st.markdown(f"- **Business ID:** `{row.get('business_id') or '-'}`")
+        st.markdown(f"- **Service ID:** `{row.get('service_id') or '-'}`")
+
+    with st.expander("Ver todos los campos (raw)"):
+        st.json(row)
+
+    if st.button("Cerrar", use_container_width=True, type="primary"):
+        clear_selected_service_detail()
+        st.rerun()
 
 
 def main() -> None:
@@ -675,11 +709,15 @@ def main() -> None:
             }
         )
 
-    if view_mode in {"Tarjetas", "Mixta"}:
+    if view_mode == "Tarjetas":
         render_service_cards(rows)
 
-    if view_mode in {"Tabla", "Mixta"}:
+    if view_mode == "Tabla":
         st.dataframe(display_rows, use_container_width=True, hide_index=True)
+
+    selected_service_detail = st.session_state.get("selected_service_detail")
+    if isinstance(selected_service_detail, dict):
+        show_service_detail_dialog(selected_service_detail)
 
     nav1, nav2, nav3 = st.columns([1, 2, 1])
     if nav1.button("Anterior", disabled=(page <= 1), use_container_width=True):
