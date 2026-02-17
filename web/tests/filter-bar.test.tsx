@@ -22,6 +22,7 @@ const baseFilters: Filters = {
   serviceName: '',
   businessName: '',
   currencyCode: '',
+  phone: '',
   durationExact: null,
   country: 'ES',
   city: '',

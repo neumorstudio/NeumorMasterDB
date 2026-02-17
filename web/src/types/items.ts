@@ -17,6 +17,7 @@ export type Filters = {
   serviceName: string;
   businessName: string;
   currencyCode: string;
+  phone: string;
   durationExact: number | null;
   country: string;
   city: string;
@@ -39,6 +40,7 @@ export type ServiceItem = {
   service_id: string | null;
   business_id: string | null;
   business_name: string | null;
+  business_phone: string | null;
   business_type_code: string | null;
   business_type_label: string | null;
   country_code: string | null;
@@ -58,6 +60,7 @@ export type ServiceItem = {
 export type BusinessCard = {
   business_id: string | null;
   business_name: string;
+  business_phone: string | null;
   business_type_label: string;
   country_code: string | null;
   region: string | null;

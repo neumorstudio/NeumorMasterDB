@@ -22,6 +22,7 @@ const schema = z.object({
   serviceName: z.string().trim().max(120).optional(),
   businessName: z.string().trim().max(120).optional(),
   currencyCode: z.string().trim().max(3).optional(),
+  phone: z.string().trim().max(40).optional(),
   durationExact: maybeNumber,
   country: z.string().trim().max(2).optional(),
   city: z.string().trim().max(80).optional(),
@@ -78,6 +79,7 @@ export function parseFilters(input: Record<string, string | string[] | undefined
     serviceName: data.serviceName ?? DEFAULT_FILTERS.serviceName,
     businessName: data.businessName ?? DEFAULT_FILTERS.businessName,
     currencyCode: (data.currencyCode ?? DEFAULT_FILTERS.currencyCode).toUpperCase(),
+    phone: data.phone ?? DEFAULT_FILTERS.phone,
     durationExact: data.durationExact ?? DEFAULT_FILTERS.durationExact,
     country: (data.country ?? DEFAULT_FILTERS.country).toUpperCase(),
     city: data.city ?? DEFAULT_FILTERS.city,
@@ -113,6 +115,7 @@ export function filtersToSearchParams(filters: Filters): URLSearchParams {
   put('serviceName', filters.serviceName);
   put('businessName', filters.businessName);
   put('currencyCode', filters.currencyCode);
+  put('phone', filters.phone);
   put('durationExact', filters.durationExact);
   put('country', filters.country);
   put('city', filters.city);

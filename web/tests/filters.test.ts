@@ -9,6 +9,7 @@ describe('parseFilters', () => {
       advancedMode: '1',
       serviceName: 'lifting',
       country: 'es',
+      phone: '+34',
       businessTypes: 'hair,nails',
       page: '2',
       pageSize: '50',
@@ -19,6 +20,7 @@ describe('parseFilters', () => {
     expect(filters.advancedMode).toBe(true);
     expect(filters.serviceName).toBe('lifting');
     expect(filters.country).toBe('ES');
+    expect(filters.phone).toBe('+34');
     expect(filters.businessTypes).toEqual(['hair', 'nails']);
     expect(filters.page).toBe(2);
     expect(filters.pageSize).toBe(50);

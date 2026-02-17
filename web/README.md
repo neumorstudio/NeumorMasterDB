@@ -47,3 +47,11 @@ npm run build
 - Configura `SUPABASE_URL` y una key en Variables de Entorno del proyecto.
 - No exponer service role key al cliente.
 - `vercel.json` no es necesario para este setup.
+
+## Migracion BD (telefono)
+
+Para habilitar telefono en tarjetas/filtros debes aplicar:
+
+- `db/migrations/20260217_add_business_phone.sql`
+
+Y asegurarte de que `v_service_search` incluye la columna `business_phone`.

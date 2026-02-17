@@ -36,3 +36,6 @@ SUPABASE_ANON_KEY = "TU_ANON_O_PUBLISHABLE_KEY"
 5. Deploy.
 
 La interfaz mantiene filtros por texto, negocio, categoria, pais, region, ciudad, precio, duracion, tipo de precio, orden y paginacion.
+
+
+Nota: el exportador ahora intenta capturar telefono del negocio y enviarlo en `business_phone` al payload de Supabase.

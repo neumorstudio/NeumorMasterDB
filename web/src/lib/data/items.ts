@@ -4,10 +4,10 @@ import { logServerError } from '@/lib/utils/logger';
 import type { BusinessCard, Filters, PagedResult, References, ServiceItem } from '@/types/items';
 
 const SELECT_FIELDS_FULL =
-  'service_id,business_id,business_name,business_type_code,business_type_label,country_code,region,city,service_name,service_category_code,service_category_label,price_kind,currency_code,price_cents,price_min_cents,price_max_cents,duration_minutes';
+  'service_id,business_id,business_name,business_phone,business_type_code,business_type_label,country_code,region,city,service_name,service_category_code,service_category_label,price_kind,currency_code,price_cents,price_min_cents,price_max_cents,duration_minutes';
 
 const SELECT_FIELDS_BUSINESS_LIGHT =
-  'business_id,business_name,business_type_label,country_code,region,city,service_name,service_category_code,service_category_label,price_kind,currency_code,price_cents,price_min_cents,price_max_cents,duration_minutes';
+  'business_id,business_name,business_phone,business_type_label,country_code,region,city,service_name,service_category_code,service_category_label,price_kind,currency_code,price_cents,price_min_cents,price_max_cents,duration_minutes';
 
 export async function getReferences(): Promise<References> {
   const [businessTypes, serviceCategories] = await Promise.all([
@@ -85,6 +85,7 @@ export async function getBusinessDetail(businessId: string) {
     business: {
       business_id: business.business_id,
       business_name: business.business_name,
+      business_phone: first.business_phone,
       business_type_label: business.business_type_label,
       business_type_code: first.business_type_code,
       country_code: first.country_code,
@@ -165,6 +166,9 @@ function buildServiceQuery(filters: Filters, selectFields: string) {
   if (filters.currencyCode.trim()) {
     params.set('currency_code', `eq.${cleanToken(filters.currencyCode.toUpperCase())}`);
   }
+  if (filters.phone.trim()) {
+    params.set('business_phone', `ilike.*${cleanToken(filters.phone)}*`);
+  }
 
   if (filters.country.trim()) {
     params.set('country_code', `eq.${filters.country.trim().toUpperCase()}`);
@@ -230,7 +234,8 @@ function buildBusinessCards(rows: ServiceItem[]): BusinessCard[] {
       grouped.set(key, {
         business_id: row.business_id,
         business_name: businessName,
-        business_type_label: row.business_type_label ?? row.business_type_code ?? '-',
+        business_phone: row.business_phone,
+        business_type_label: row.business_type_label ?? row.business_type_code ?? '-', 
         country_code: row.country_code,
         region: row.region,
         city: row.city,

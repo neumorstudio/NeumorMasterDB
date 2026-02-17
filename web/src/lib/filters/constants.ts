@@ -36,6 +36,7 @@ export const DEFAULT_FILTERS = {
   serviceName: '',
   businessName: '',
   currencyCode: '',
+  phone: '',
   durationExact: null,
   country: 'ES',
   city: '',

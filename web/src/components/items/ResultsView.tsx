@@ -37,6 +37,7 @@ type BusinessDetailResponse = {
   business: {
     business_id: string | null;
     business_name: string;
+    business_phone: string | null;
     business_type_label: string;
     business_type_code: string | null;
     country_code: string | null;
@@ -158,6 +159,7 @@ export function ResultsView({ filters, services, businesses }: Props) {
                   <Stack spacing={1}>
                     <Typography variant="h6">{item.business_name}</Typography>
                     <Typography color="text.secondary">{item.business_type_label}</Typography>
+                    <Typography variant="body2" color="text.secondary">Telefono: {item.business_phone ?? '-'}</Typography>
                     <Typography>
                       Servicios: {item.service_count} | Precio:{' '}
                       {item.min_price_cents !== null ? formatMoney(item.min_price_cents) : 'Consultar'}
@@ -205,6 +207,10 @@ export function ResultsView({ filters, services, businesses }: Props) {
                         ? ` (${businessDetail.business.business_type_code})`
                         : ''}
                     </Typography>
+                  </Stack>
+                  <Stack spacing={0.5}>
+                    <Typography variant="subtitle2">Telefono</Typography>
+                    <Typography>{businessDetail.business.business_phone ?? '-'}</Typography>
                   </Stack>
                   <Stack spacing={0.5}>
                     <Typography variant="subtitle2">Ubicacion</Typography>
@@ -327,6 +333,7 @@ export function ResultsView({ filters, services, businesses }: Props) {
             <Stack spacing={1}>
               <Typography variant="h6">{item.service_name ?? 'Servicio sin nombre'}</Typography>
               <Typography color="text.secondary">{item.business_name ?? 'Negocio sin nombre'}</Typography>
+              <Typography variant="body2" color="text.secondary">Telefono: {item.business_phone ?? '-'}</Typography>
               <Typography>{formatServicePrice(item)}</Typography>
               {item.service_id ? (
                 <Button component={Link} href={`/items/${item.service_id}`} sx={{ width: 'fit-content' }}>

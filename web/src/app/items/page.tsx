@@ -75,6 +75,7 @@ function hasActiveFilters(filters: Filters) {
       filters.serviceName.trim() ||
       filters.businessName.trim() ||
       filters.currencyCode.trim() ||
+      filters.phone.trim() ||
       filters.durationExact !== null ||
       filters.city.trim() ||
       filters.region.trim() ||

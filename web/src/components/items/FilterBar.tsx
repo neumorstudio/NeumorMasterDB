@@ -278,6 +278,14 @@ export function FilterBar({ filters, businessTypes, categories }: Props) {
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
                       <TextField
+                        label="Telefono"
+                        value={form.phone}
+                        onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value, page: 1 }))}
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <TextField
                         label="Duracion exacta (min)"
                         type="number"
                         value={form.durationExact ?? ''}
@@ -425,6 +433,7 @@ export function FilterBar({ filters, businessTypes, categories }: Props) {
                     serviceName: '',
                     businessName: '',
                     currencyCode: '',
+                    phone: '',
                     durationExact: null,
                     city: '',
                     region: '',

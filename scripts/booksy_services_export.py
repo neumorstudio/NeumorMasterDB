@@ -46,6 +46,8 @@ EURO_PRICE_RE = re.compile(
 )
 TAG_RE = re.compile(r"<[^>]+>")
 WS_RE = re.compile(r"\s+")
+TEL_LINK_RE = re.compile(r'href="tel:([^"#?]+)"', re.IGNORECASE)
+PHONE_TEXT_RE = re.compile(r'(?:(?:\+34|0034)\s*)?(?:\d[\s.-]?){9,12}')
 
 
 def clean_text(raw: str) -> str:
@@ -95,6 +97,39 @@ def extract_business_name(page_html: str) -> str | None:
                 return name
     return None
 
+
+
+
+def normalize_phone(raw: str) -> str | None:
+    candidate = raw.strip()
+    candidate = candidate.replace('(0)', '').replace(' ', '').replace('-', '').replace('.', '')
+    candidate = candidate.replace('tel:', '').replace('TEL:', '')
+    if candidate.startswith('0034'):
+        candidate = '+' + candidate[2:]
+    if candidate.startswith('34') and len(candidate) == 11:
+        candidate = '+' + candidate
+    if candidate.startswith('+34') and len(candidate) == 12:
+        return candidate
+    digits = ''.join(ch for ch in candidate if ch.isdigit())
+    if len(digits) == 9:
+        return '+34' + digits
+    if len(digits) == 11 and digits.startswith('34'):
+        return '+' + digits
+    return None
+
+
+def extract_business_phone(page_html: str) -> str | None:
+    link_match = TEL_LINK_RE.search(page_html)
+    if link_match:
+        normalized = normalize_phone(html.unescape(link_match.group(1)))
+        if normalized:
+            return normalized
+
+    for match in PHONE_TEXT_RE.findall(clean_text(page_html)):
+        normalized = normalize_phone(match)
+        if normalized:
+            return normalized
+    return None
 
 def parse_euro_to_cents(price_text: str) -> int | None:
     raw = (
@@ -228,6 +263,7 @@ def build_supabase_payload(
     business_type_code: str,
     country_code: str,
     city: str | None,
+    business_phone: str | None,
 ) -> dict:
     payload: dict[str, object] = {
         "source_code": source_code,
@@ -238,6 +274,8 @@ def build_supabase_payload(
         "country_code": country_code,
         "services": [],
     }
+    if business_phone:
+        payload["business_phone"] = business_phone
     resolved_city = city or guess_city_from_url(url)
     if resolved_city:
         payload["city"] = resolved_city
@@ -289,7 +327,7 @@ def write_csv_rows(csv_path: Path, rows: Iterable[dict[str, str]]) -> int:
     ensure_parent(csv_path)
     file_exists = csv_path.exists()
     with csv_path.open("a", newline="", encoding="utf-8") as handle:
-        fieldnames = ["scraped_at", "url", "business_name", "service_name", "price"]
+        fieldnames = ["scraped_at", "url", "business_name", "business_phone", "service_name", "price"]
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         if not file_exists:
             writer.writeheader()
@@ -336,6 +374,7 @@ def run(
             business_name = extract_business_name(html_doc)
             if not business_name:
                 raise RuntimeError("No se encontró el nombre del negocio.")
+            business_phone = extract_business_phone(html_doc)
             services = extract_services(html_doc)
             if not services:
                 raise RuntimeError("No se encontraron servicios.")
@@ -349,6 +388,7 @@ def run(
                     business_type_code=business_type_code,
                     country_code=country_code,
                     city=city,
+                    business_phone=business_phone,
                 )
                 rpc_result = ingest_supabase(
                     supabase_url=supabase_url or "",
@@ -371,13 +411,15 @@ def run(
                         "scraped_at": now,
                         "url": url,
                         "business_name": business_name,
+                        "business_phone": business_phone or "",
                         "service_name": service_name,
                         "price": price,
                     }
                 )
                 added_for_url += 1
+            phone_info = f" tel={business_phone}" if business_phone else ""
             print(
-                f"[OK] {business_name}: {len(services)} servicios detectados, "
+                f"[OK] {business_name}{phone_info}: {len(services)} servicios detectados, "
                 f"{added_for_url} nuevos guardados."
             )
         except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as exc:
