@@ -1,0 +1,69 @@
+0 verbose cli /home/mate0s/.nvm/versions/node/v24.12.0/bin/node /home/mate0s/.nvm/versions/node/v24.12.0/lib/node_modules/npm/bin/npm-cli.js
+1 info using npm@11.7.0
+2 info using node@v24.12.0
+3 silly config load:file:/home/mate0s/.nvm/versions/node/v24.12.0/lib/node_modules/npm/npmrc
+4 silly config load:file:/home/mate0s/Documentos/NeumorStudio/ValenBimbatti/.npmrc
+5 silly config load:file:/home/mate0s/.npmrc
+6 silly config load:file:/home/mate0s/.nvm/versions/node/v24.12.0/etc/npmrc
+7 verbose title npm exec playwright-cli --help
+8 verbose argv "exec" "--yes" "--package" "@playwright/cli" "--" "playwright-cli" "--help"
+9 verbose logfile logs-max:10 dir:/home/mate0s/Documentos/NeumorStudio/ValenBimbatti/.npm-cache/_logs/2026-02-17T12_32_26_147Z-
+10 verbose logfile /home/mate0s/Documentos/NeumorStudio/ValenBimbatti/.npm-cache/_logs/2026-02-17T12_32_26_147Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4496293888 maxSize:1124073472 maxEntrySize:562036736
+13 http fetch GET 200 https://registry.npmjs.org/@playwright%2fcli 156ms (cache miss)
+14 silly packumentCache heap:4496293888 maxSize:1124073472 maxEntrySize:562036736
+15 silly idealTree buildDeps
+16 silly fetch manifest @playwright/cli@0.1.1
+17 silly packumentCache full:https://registry.npmjs.org/@playwright%2fcli cache-miss
+18 http fetch GET 200 https://registry.npmjs.org/@playwright%2fcli 59ms (cache miss)
+19 silly packumentCache full:https://registry.npmjs.org/@playwright%2fcli set size:undefined disposed:false
+20 silly placeDep ROOT @playwright/cli@0.1.1 OK for:  want: 0.1.1
+21 silly fetch manifest minimist@^1.2.5
+22 silly packumentCache full:https://registry.npmjs.org/minimist cache-miss
+23 silly fetch manifest playwright@1.59.0-alpha-1771104257000
+24 silly packumentCache full:https://registry.npmjs.org/playwright cache-miss
+25 http fetch GET 200 https://registry.npmjs.org/minimist 36ms (cache miss)
+26 silly packumentCache full:https://registry.npmjs.org/minimist set size:undefined disposed:false
+27 http fetch GET 200 https://registry.npmjs.org/playwright 296ms (cache miss)
+28 silly packumentCache full:https://registry.npmjs.org/playwright set size:undefined disposed:false
+29 silly placeDep ROOT minimist@1.2.8 OK for: @playwright/cli@0.1.1 want: ^1.2.5
+30 silly placeDep ROOT playwright@1.59.0-alpha-1771104257000 OK for: @playwright/cli@0.1.1 want: 1.59.0-alpha-1771104257000
+31 silly fetch manifest playwright-core@1.59.0-alpha-1771104257000
+32 silly packumentCache full:https://registry.npmjs.org/playwright-core cache-miss
+33 silly fetch manifest fsevents@2.3.2
+34 silly packumentCache full:https://registry.npmjs.org/fsevents cache-miss
+35 http fetch GET 200 https://registry.npmjs.org/fsevents 38ms (cache miss)
+36 silly packumentCache full:https://registry.npmjs.org/fsevents set size:undefined disposed:false
+37 http fetch GET 200 https://registry.npmjs.org/playwright-core 322ms (cache miss)
+38 silly packumentCache full:https://registry.npmjs.org/playwright-core set size:undefined disposed:false
+39 silly placeDep ROOT fsevents@2.3.2 OK for: playwright@1.59.0-alpha-1771104257000 want: 2.3.2
+40 silly placeDep ROOT playwright-core@1.59.0-alpha-1771104257000 OK for: playwright@1.59.0-alpha-1771104257000 want: 1.59.0-alpha-1771104257000
+41 silly reify moves {}
+42 silly audit bulk request {
+42 silly audit   '@playwright/cli': [ '0.1.1' ],
+42 silly audit   minimist: [ '1.2.8' ],
+42 silly audit   playwright: [ '1.59.0-alpha-1771104257000' ],
+42 silly audit   fsevents: [ '2.3.2' ],
+42 silly audit   'playwright-core': [ '1.59.0-alpha-1771104257000' ]
+42 silly audit }
+43 http cache playwright-core@https://registry.npmjs.org/playwright-core/-/playwright-core-1.59.0-alpha-1771104257000.tgz 0ms (cache hit)
+44 http cache minimist@https://registry.npmjs.org/minimist/-/minimist-1.2.8.tgz 0ms (cache hit)
+45 http cache @playwright/cli@https://registry.npmjs.org/@playwright/cli/-/cli-0.1.1.tgz 0ms (cache hit)
+46 silly tarball no local data for playwright-core@https://registry.npmjs.org/playwright-core/-/playwright-core-1.59.0-alpha-1771104257000.tgz. Extracting by manifest.
+47 silly tarball no local data for @playwright/cli@https://registry.npmjs.org/@playwright/cli/-/cli-0.1.1.tgz. Extracting by manifest.
+48 http cache playwright@https://registry.npmjs.org/playwright/-/playwright-1.59.0-alpha-1771104257000.tgz 0ms (cache hit)
+49 silly tarball no local data for minimist@https://registry.npmjs.org/minimist/-/minimist-1.2.8.tgz. Extracting by manifest.
+50 silly tarball no local data for playwright@https://registry.npmjs.org/playwright/-/playwright-1.59.0-alpha-1771104257000.tgz. Extracting by manifest.
+51 http fetch GET 200 https://registry.npmjs.org/@playwright/cli/-/cli-0.1.1.tgz 103ms (cache miss)
+52 http fetch GET 200 https://registry.npmjs.org/minimist/-/minimist-1.2.8.tgz 105ms (cache miss)
+53 http fetch GET 200 https://registry.npmjs.org/playwright-core/-/playwright-core-1.59.0-alpha-1771104257000.tgz 145ms (cache miss)
+54 http fetch GET 200 https://registry.npmjs.org/playwright/-/playwright-1.59.0-alpha-1771104257000.tgz 163ms (cache miss)
+55 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 199ms
+56 silly audit report {}
+57 verbose cwd /home/mate0s/Documentos/NeumorStudio/ValenBimbatti
+58 verbose os Linux 6.17.0-14-generic
+59 verbose node v24.12.0
+60 verbose npm  v11.7.0
+61 verbose exit 0
+62 info ok

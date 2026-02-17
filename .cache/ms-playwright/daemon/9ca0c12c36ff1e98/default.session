@@ -1,0 +1,8 @@
+{
+  "name": "default",
+  "version": "1.59.0-alpha-1771104257000",
+  "timestamp": 1771331560863,
+  "socketPath": "/tmp/playwright-cli/9ca0c12c36ff1e98/default.sock",
+  "cli": {},
+  "userDataDirPrefix": "/home/mate0s/Documentos/NeumorStudio/ValenBimbatti/.cache/ms-playwright/daemon/9ca0c12c36ff1e98/ud-default"
+}
