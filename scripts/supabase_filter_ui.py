@@ -445,6 +445,7 @@ def inject_styles(theme_mode: str) -> None:
           color: var(--text) !important;
         }}
 
+        [data-testid="stDataFrame"] div[style*="--gdg-accent-color"],
         [data-testid="stDataFrame"] div[style*="--gdg-bg-cell"],
         [data-testid="stDataFrame"] div[style*="--header-height"] {{
           --gdg-bg-header: var(--df-header-bg) !important;
@@ -1000,6 +1001,8 @@ def show_business_detail_dialog(business: dict[str, Any], services: list[dict[st
 
     if services:
         st.markdown("#### Servicios de este negocio (según filtros actuales)")
+        active_theme = str(st.session_state.get("ui_theme_mode", THEME_MODE_OPTIONS[0])).lower()
+        business_df_key = f"business_detail_df_{business.get('business_id') or 'none'}_{active_theme}"
         service_rows = [
             {
                 "Servicio": s.get("service_name"),
@@ -1018,6 +1021,7 @@ def show_business_detail_dialog(business: dict[str, Any], services: list[dict[st
             service_rows,
             use_container_width=True,
             hide_index=True,
+            key=business_df_key,
             column_config={
                 "Precio": st.column_config.NumberColumn("Precio", format="%.2f EUR"),
                 "Duracion (min)": st.column_config.NumberColumn("Duracion (min)", format="%d"),
@@ -1350,7 +1354,13 @@ def main() -> None:
         else:
             render_service_cards(rows)
     else:
-        st.dataframe(display_rows, use_container_width=True, hide_index=True)
+        active_theme = str(st.session_state.get("ui_theme_mode", THEME_MODE_OPTIONS[0])).lower()
+        st.dataframe(
+            display_rows,
+            use_container_width=True,
+            hide_index=True,
+            key=f"main_results_df_{active_theme}",
+        )
 
     selected_business_detail = st.session_state.get("selected_business_detail")
     if isinstance(selected_business_detail, dict) and view_mode == "Tarjetas" and card_scope == "Negocios":
