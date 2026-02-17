@@ -35,6 +35,16 @@ CLIENT_SORT_LABELS = {
     "Duracion: corta a larga",
     "Duracion: larga a corta",
 }
+SELECT_FIELDS_FULL = (
+    "service_id,business_id,business_name,business_type_code,business_type_label,"
+    "country_code,region,city,service_name,service_category_code,service_category_label,"
+    "price_kind,currency_code,price_cents,price_min_cents,price_max_cents,duration_minutes"
+)
+SELECT_FIELDS_BUSINESS_LIGHT = (
+    "business_id,business_name,business_type_label,country_code,region,city,"
+    "service_name,service_category_code,service_category_label,"
+    "price_kind,currency_code,price_cents,price_min_cents,price_max_cents,duration_minutes"
+)
 
 DEFAULT_STATE: dict[str, Any] = {
     "f_search": "",
@@ -216,6 +226,12 @@ def init_state() -> None:
         st.session_state["last_filter_signature"] = None
     if "last_view_signature" not in st.session_state:
         st.session_state["last_view_signature"] = None
+    if "business_cards_cache_key" not in st.session_state:
+        st.session_state["business_cards_cache_key"] = None
+    if "business_cards_cache_data" not in st.session_state:
+        st.session_state["business_cards_cache_data"] = []
+    if "business_cards_cache_total_services" not in st.session_state:
+        st.session_state["business_cards_cache_total_services"] = 0
 
 
 def reset_filters() -> None:
@@ -223,6 +239,9 @@ def reset_filters() -> None:
         st.session_state[key] = value
     st.session_state["last_filter_signature"] = None
     st.session_state["last_view_signature"] = None
+    st.session_state["business_cards_cache_key"] = None
+    st.session_state["business_cards_cache_data"] = []
+    st.session_state["business_cards_cache_total_services"] = 0
     clear_selected_details()
 
 
@@ -277,11 +296,13 @@ def build_filters(
     min_duration: int | None,
     max_duration: int | None,
     sort_order: str,
-) -> list[tuple[str, str]]:
+    *,
+    select_fields: str = SELECT_FIELDS_FULL,
+) -> tuple[tuple[str, str], ...]:
     params: list[tuple[str, str]] = [
         (
             "select",
-            "service_id,business_id,business_name,business_type_code,business_type_label,country_code,region,city,service_name,service_category_code,service_category_label,price_kind,currency_code,price_cents,price_min_cents,price_max_cents,duration_minutes",
+            select_fields,
         ),
         ("order", sort_order),
     ]
@@ -309,13 +330,18 @@ def build_filters(
         params.append(("duration_minutes", f"gte.{min_duration}"))
     if max_duration is not None:
         params.append(("duration_minutes", f"lte.{max_duration}"))
-    return params
+    return tuple(params)
 
 
+def add_filter_param(params: tuple[tuple[str, str], ...], key: str, value: str) -> tuple[tuple[str, str], ...]:
+    return tuple(list(params) + [(key, value)])
+
+
+@st.cache_data(ttl=90, show_spinner=False)
 def fetch_rows(
     base_url: str,
     api_key: str,
-    params: list[tuple[str, str]],
+    params: tuple[tuple[str, str], ...],
     page: int,
     page_size: int,
 ) -> tuple[list[dict[str, Any]], int]:
@@ -346,10 +372,11 @@ def fetch_rows(
     return resp.json(), total
 
 
+@st.cache_data(ttl=90, show_spinner=False)
 def fetch_all_rows(
     base_url: str,
     api_key: str,
-    params: list[tuple[str, str]],
+    params: tuple[tuple[str, str], ...],
     *,
     chunk_size: int = 1000,
 ) -> tuple[list[dict[str, Any]], int]:
@@ -524,14 +551,14 @@ def build_business_cards(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "country_code": row.get("country_code"),
                 "region": row.get("region"),
                 "city": row.get("city"),
-                "services": [],
+                "service_count": 0,
                 "min_price_cents": None,
                 "max_price_cents": None,
                 "categories": set(),
             }
 
         bucket = grouped[key]
-        bucket["services"].append(dict(row))
+        bucket["service_count"] += 1
         category_label = row.get("service_category_label") or row.get("service_category_code")
         if category_label:
             bucket["categories"].add(str(category_label))
@@ -544,7 +571,7 @@ def build_business_cards(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 bucket["max_price_cents"] = price
 
     businesses = list(grouped.values())
-    businesses.sort(key=lambda b: (-(len(b["services"])), str(b["business_name"]).lower()))
+    businesses.sort(key=lambda b: (-int(b["service_count"]), str(b["business_name"]).lower()))
     return businesses
 
 
@@ -588,7 +615,7 @@ def render_business_cards(businesses: list[dict[str, Any]]) -> None:
         business_type = html.escape(str(business.get("business_type_label") or "-"))
         city = html.escape(str(business.get("city") or "-"))
         region = html.escape(str(business.get("region") or "-"))
-        total_services = len(business.get("services", []))
+        total_services = int(business.get("service_count") or 0)
 
         min_price = business.get("min_price_cents")
         max_price = business.get("max_price_cents")
@@ -653,7 +680,7 @@ def show_service_detail_dialog(row: dict[str, Any]) -> None:
 
 
 @st.dialog("Detalle del negocio")
-def show_business_detail_dialog(business: dict[str, Any]) -> None:
+def show_business_detail_dialog(business: dict[str, Any], services: list[dict[str, Any]]) -> None:
     st.markdown(f"### {business.get('business_name') or 'Negocio sin nombre'}")
     st.caption(business.get("business_type_label") or "-")
     c1, c2 = st.columns(2)
@@ -663,7 +690,6 @@ def show_business_detail_dialog(business: dict[str, Any]) -> None:
         st.markdown(f"- **Ciudad:** {business.get('city') or '-'}")
         st.markdown(f"- **Business ID:** `{business.get('business_id') or '-'}`")
     with c2:
-        services = business.get("services", [])
         st.markdown(f"- **Servicios filtrados:** {len(services)}")
         min_price = business.get("min_price_cents")
         max_price = business.get("max_price_cents")
@@ -675,7 +701,6 @@ def show_business_detail_dialog(business: dict[str, Any]) -> None:
         categories = sorted(list(business.get("categories") or []))
         st.markdown(f"- **Categorias:** {', '.join(categories) if categories else '-'}")
 
-    services = business.get("services", [])
     if services:
         st.markdown("#### Servicios de este negocio (según filtros actuales)")
         service_rows = [
@@ -763,6 +788,12 @@ def main() -> None:
         st.markdown("#### Ajustes de vista")
         st.selectbox("Orden", options=list(sort_map.keys()), key="f_sort_label")
         st.selectbox("Resultados por pagina", options=PAGE_SIZE_OPTIONS, key="f_page_size")
+        if st.button("Refrescar datos (limpiar caché)", use_container_width=True):
+            st.cache_data.clear()
+            st.session_state["business_cards_cache_key"] = None
+            st.session_state["business_cards_cache_data"] = []
+            st.session_state["business_cards_cache_total_services"] = 0
+            st.rerun()
         if st.button("Limpiar todos los filtros", use_container_width=True):
             reset_filters()
             st.rerun()
@@ -852,7 +883,33 @@ def main() -> None:
     if filter_signature != st.session_state["last_filter_signature"]:
         st.session_state["page"] = 1
         st.session_state["last_filter_signature"] = filter_signature
+        st.session_state["business_cards_cache_key"] = None
+        st.session_state["business_cards_cache_data"] = []
+        st.session_state["business_cards_cache_total_services"] = 0
         clear_selected_details()
+
+    view_mode = st.radio(
+        "Vista de resultados",
+        VIEW_MODE_OPTIONS,
+        key="f_view_mode",
+        horizontal=True,
+    )
+    card_scope = st.session_state.get("f_card_scope", CARD_SCOPE_OPTIONS[0])
+    if view_mode == "Tarjetas":
+        card_scope = st.radio(
+            "Mostrar tarjetas de",
+            CARD_SCOPE_OPTIONS,
+            key="f_card_scope",
+            horizontal=True,
+        )
+    st.caption(f"Modo activo: {view_mode} · {card_scope if view_mode == 'Tarjetas' else 'Tabla'}")
+
+    view_signature = (view_mode, card_scope if view_mode == "Tarjetas" else "Tabla")
+    if view_signature != st.session_state.get("last_view_signature"):
+        st.session_state["last_view_signature"] = view_signature
+        clear_selected_details()
+
+    business_card_mode = view_mode == "Tarjetas" and card_scope == "Negocios"
 
     params = build_filters(
         search=st.session_state["f_search"],
@@ -871,31 +928,38 @@ def main() -> None:
             if st.session_state["f_sort_label"] in CLIENT_SORT_LABELS
             else sort_map[st.session_state["f_sort_label"]]
         ),
+        select_fields=(SELECT_FIELDS_BUSINESS_LIGHT if business_card_mode else SELECT_FIELDS_FULL),
     )
 
     page_size = int(st.session_state["f_page_size"])
     page = int(st.session_state["page"])
-    initial_view_mode = str(st.session_state.get("f_view_mode", VIEW_MODE_OPTIONS[0]))
-    initial_card_scope = str(st.session_state.get("f_card_scope", CARD_SCOPE_OPTIONS[0]))
-    business_card_mode = initial_view_mode == "Tarjetas" and initial_card_scope == "Negocios"
 
     business_cards_all: list[dict[str, Any]] = []
     business_cards_page: list[dict[str, Any]] = []
     total_services_filtered = 0
+    rows: list[dict[str, Any]] = []
 
     try:
         if business_card_mode:
-            all_rows, total_services_filtered = fetch_all_rows(
-                base_url=supabase_url,
-                api_key=api_key,
-                params=params,
-                chunk_size=1000,
-            )
-            if st.session_state["f_sort_label"] in CLIENT_SORT_LABELS:
-                all_rows = sort_rows_client(all_rows, st.session_state["f_sort_label"])
-            business_cards_all = build_business_cards(all_rows)
+            cards_cache_key = (params, st.session_state["f_sort_label"])
+            if st.session_state.get("business_cards_cache_key") == cards_cache_key:
+                business_cards_all = list(st.session_state.get("business_cards_cache_data", []))
+                total_services_filtered = int(st.session_state.get("business_cards_cache_total_services", 0))
+            else:
+                with st.spinner("Optimizando y agrupando negocios..."):
+                    all_rows, total_services_filtered = fetch_all_rows(
+                        base_url=supabase_url,
+                        api_key=api_key,
+                        params=params,
+                        chunk_size=1000,
+                    )
+                    if st.session_state["f_sort_label"] in CLIENT_SORT_LABELS:
+                        all_rows = sort_rows_client(all_rows, st.session_state["f_sort_label"])
+                    business_cards_all = build_business_cards(all_rows)
+                st.session_state["business_cards_cache_key"] = cards_cache_key
+                st.session_state["business_cards_cache_data"] = business_cards_all
+                st.session_state["business_cards_cache_total_services"] = total_services_filtered
             total = len(business_cards_all)
-            rows = []
         elif st.session_state["f_sort_label"] in CLIENT_SORT_LABELS:
             all_rows, total = fetch_all_rows(
                 base_url=supabase_url,
@@ -928,7 +992,6 @@ def main() -> None:
         start = max(0, (page - 1) * page_size)
         end = start + page_size
         business_cards_page = business_cards_all[start:end]
-        rows = [service for business in business_cards_page for service in business.get("services", [])]
 
     unique_businesses = len({row.get("business_id") or row.get("business_name") for row in rows})
     m1, m2, m3, m4 = st.columns(4)
@@ -954,7 +1017,7 @@ def main() -> None:
     )
     render_active_chips(active)
 
-    if not rows:
+    if (business_card_mode and total == 0) or ((not business_card_mode) and not rows):
         st.markdown("<div class='panel-shell'><h3>Sin resultados para estos filtros</h3></div>", unsafe_allow_html=True)
         c1, c2 = st.columns([1, 2])
         if c1.button("Resetear filtros", type="primary", use_container_width=True):
@@ -962,14 +1025,6 @@ def main() -> None:
             st.rerun()
         c2.caption("Prueba quitando ciudad, ampliando precio/duracion o cambiando categoria.")
         st.stop()
-
-    view_mode = st.radio(
-        "Vista de resultados",
-        VIEW_MODE_OPTIONS,
-        key="f_view_mode",
-        horizontal=True,
-    )
-    st.caption(f"Modo activo: {view_mode}")
 
     display_rows: list[dict[str, Any]] = []
     for row in rows:
@@ -986,32 +1041,42 @@ def main() -> None:
             }
         )
 
-    card_scope = st.session_state.get("f_card_scope", CARD_SCOPE_OPTIONS[0])
     if view_mode == "Tarjetas":
-        card_scope = st.radio(
-            "Mostrar tarjetas de",
-            CARD_SCOPE_OPTIONS,
-            key="f_card_scope",
-            horizontal=True,
-        )
         if card_scope == "Negocios":
-            if business_card_mode:
-                render_business_cards(business_cards_page)
-            else:
-                render_business_cards(build_business_cards(rows))
+            render_business_cards(business_cards_page)
         else:
             render_service_cards(rows)
     else:
         st.dataframe(display_rows, use_container_width=True, hide_index=True)
 
-    view_signature = (view_mode, card_scope if view_mode == "Tarjetas" else "Tabla")
-    if view_signature != st.session_state.get("last_view_signature"):
-        st.session_state["last_view_signature"] = view_signature
-        clear_selected_details()
-
     selected_business_detail = st.session_state.get("selected_business_detail")
     if isinstance(selected_business_detail, dict) and view_mode == "Tarjetas" and card_scope == "Negocios":
-        show_business_detail_dialog(selected_business_detail)
+        business_service_rows: list[dict[str, Any]] = []
+        business_id = selected_business_detail.get("business_id")
+        if business_id:
+            business_modal_params = build_filters(
+                search=st.session_state["f_search"],
+                country_code=st.session_state["f_country"],
+                city_like=st.session_state["f_city"],
+                region_like=st.session_state["f_region"],
+                business_types=[bt_options[label] for label in st.session_state["f_business_types"]],
+                categories=[cat_options[label] for label in st.session_state["f_categories"]],
+                price_kinds=[price_kind_map[label] for label in st.session_state["f_price_kinds"]],
+                min_price=int(st.session_state["f_price_range"][0] * 100) if st.session_state["f_price_range"][0] > 0 else None,
+                max_price=int(st.session_state["f_price_range"][1] * 100) if st.session_state["f_price_range"][1] > 0 else None,
+                min_duration=st.session_state["f_duration_range"][0] if st.session_state["f_duration_range"][0] > 0 else None,
+                max_duration=st.session_state["f_duration_range"][1] if st.session_state["f_duration_range"][1] > 0 else None,
+                sort_order="service_name.asc",
+                select_fields=SELECT_FIELDS_FULL,
+            )
+            business_modal_params = add_filter_param(business_modal_params, "business_id", f"eq.{business_id}")
+            business_service_rows, _business_total = fetch_all_rows(
+                base_url=supabase_url,
+                api_key=api_key,
+                params=business_modal_params,
+                chunk_size=500,
+            )
+        show_business_detail_dialog(selected_business_detail, business_service_rows)
 
     selected_service_detail = st.session_state.get("selected_service_detail")
     if isinstance(selected_service_detail, dict) and view_mode == "Tarjetas" and card_scope == "Servicios":
