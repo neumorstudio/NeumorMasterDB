@@ -38,10 +38,9 @@ import type { Filters, ReferenceOption } from '@/types/items';
 type Props = {
   filters: Filters;
   businessTypes: ReferenceOption[];
-  categories: ReferenceOption[];
 };
 
-export function FilterBar({ filters, businessTypes, categories }: Props) {
+export function FilterBar({ filters, businessTypes }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const currentParams = useSearchParams();
@@ -143,7 +142,7 @@ export function FilterBar({ filters, businessTypes, categories }: Props) {
             </Grid>
 
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 4 }}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl fullWidth>
                   <InputLabel id="business-types-label">Tipo de negocio</InputLabel>
                   <Select
@@ -163,27 +162,7 @@ export function FilterBar({ filters, businessTypes, categories }: Props) {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <FormControl fullWidth>
-                  <InputLabel id="categories-label">Categoria</InputLabel>
-                  <Select
-                    labelId="categories-label"
-                    multiple
-                    label="Categoria"
-                    value={form.categories}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, categories: e.target.value as string[], page: 1 }))
-                    }
-                  >
-                    {categories.map((option) => (
-                      <MenuItem key={option.code} value={option.code}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid size={{ xs: 6, md: 2 }}>
+              <Grid size={{ xs: 6, md: 3 }}>
                 <TextField
                   label="Precio min (EUR)"
                   type="number"
@@ -198,7 +177,7 @@ export function FilterBar({ filters, businessTypes, categories }: Props) {
                   fullWidth
                 />
               </Grid>
-              <Grid size={{ xs: 6, md: 2 }}>
+              <Grid size={{ xs: 6, md: 3 }}>
                 <TextField
                   label="Precio max (EUR)"
                   type="number"

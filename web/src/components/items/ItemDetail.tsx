@@ -18,7 +18,6 @@ export function ItemDetail({ item }: { item: ServiceItem }) {
             <Typography><strong>Precio:</strong> {formatServicePrice(item)}</Typography>
             <Typography><strong>Tipo precio:</strong> {item.price_kind ?? '-'}</Typography>
             <Typography><strong>Duracion:</strong> {item.duration_minutes ?? '-'} min</Typography>
-            <Typography><strong>Categoria:</strong> {item.service_category_label ?? item.service_category_code ?? '-'}</Typography>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
             <Typography><strong>Pais:</strong> {item.country_code ?? '-'}</Typography>

@@ -28,7 +28,6 @@ export default async function ItemsPage({ searchParams }: Props) {
       <FilterBar
         filters={filters}
         businessTypes={references.businessTypes}
-        categories={references.serviceCategories}
       />
 
       {!shouldFetch ? (
@@ -47,7 +46,7 @@ export default async function ItemsPage({ searchParams }: Props) {
           {(result?.total ?? 0) === 0 ? (
             <StatusState
               title="Sin resultados"
-              description="No encontramos datos con estos filtros. Prueba ampliar rango de precio o limpiar categoria."
+              description="No encontramos datos con estos filtros. Prueba ampliar rango de precio o limpiar filtros."
               actionLabel="Resetear"
               actionHref="/items"
             />

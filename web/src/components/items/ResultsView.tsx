@@ -5,7 +5,6 @@ import {
   Card,
   CardActionArea,
   CardContent,
-  Chip,
   CircularProgress,
   Dialog,
   DialogContent,
@@ -51,7 +50,7 @@ type BusinessDetailResponse = {
   services: ServiceItem[];
 };
 
-type BusinessSortField = 'service_id' | 'service_name' | 'category' | 'price' | 'duration';
+type BusinessSortField = 'service_id' | 'service_name' | 'price' | 'duration';
 
 export function ResultsView({ filters, services, businesses }: Props) {
   const [businessModalOpen, setBusinessModalOpen] = useState(false);
@@ -116,7 +115,6 @@ export function ResultsView({ filters, services, businesses }: Props) {
               <TableRow>
                 <TableCell>Negocio</TableCell>
                 <TableCell>Servicio</TableCell>
-                <TableCell>Categoria</TableCell>
                 <TableCell>Ciudad</TableCell>
                 <TableCell>Precio</TableCell>
                 <TableCell>Detalle</TableCell>
@@ -127,7 +125,6 @@ export function ResultsView({ filters, services, businesses }: Props) {
                 <TableRow key={`${item.service_id ?? 'service'}-${idx}`}>
                   <TableCell>{item.business_name ?? '-'}</TableCell>
                   <TableCell>{item.service_name ?? '-'}</TableCell>
-                  <TableCell>{item.service_category_label ?? item.service_category_code ?? '-'}</TableCell>
                   <TableCell>{item.city ?? '-'}</TableCell>
                   <TableCell>{formatServicePrice(item)}</TableCell>
                   <TableCell>
@@ -167,11 +164,6 @@ export function ResultsView({ filters, services, businesses }: Props) {
                         ? ` - ${formatMoney(item.max_price_cents)}`
                         : ''}
                     </Typography>
-                    <Stack direction="row" spacing={1} flexWrap="wrap">
-                      {item.categories.slice(0, 3).map((category) => (
-                        <Chip key={category} label={category} size="small" />
-                      ))}
-                    </Stack>
                     <Typography variant="caption" color="text.secondary">
                       Click para ver detalle completo
                     </Typography>
@@ -238,18 +230,6 @@ export function ResultsView({ filters, services, businesses }: Props) {
                         : ''}
                     </Typography>
                   </Stack>
-                  <Stack spacing={0.5}>
-                    <Typography variant="subtitle2">Categorias</Typography>
-                    <Stack direction="row" spacing={1} flexWrap="wrap">
-                      {businessDetail.business.categories.length > 0 ? (
-                        businessDetail.business.categories.map((category) => (
-                          <Chip key={category} label={category} size="small" />
-                        ))
-                      ) : (
-                        <Typography>-</Typography>
-                      )}
-                    </Stack>
-                  </Stack>
                 </Stack>
 
                 <Divider />
@@ -278,15 +258,6 @@ export function ResultsView({ filters, services, businesses }: Props) {
                       </TableCell>
                       <TableCell>
                         <TableSortLabel
-                          active={businessSortField === 'category'}
-                          direction={businessSortField === 'category' ? businessSortDirection : 'asc'}
-                          onClick={() => onSortBusinessTable('category')}
-                        >
-                          Categoria
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell>
-                        <TableSortLabel
                           active={businessSortField === 'price'}
                           direction={businessSortField === 'price' ? businessSortDirection : 'asc'}
                           onClick={() => onSortBusinessTable('price')}
@@ -310,7 +281,6 @@ export function ResultsView({ filters, services, businesses }: Props) {
                       <TableRow key={`${service.service_id ?? 'service'}-${index}`}>
                         <TableCell>{service.service_id ?? '-'}</TableCell>
                         <TableCell>{service.service_name ?? '-'}</TableCell>
-                        <TableCell>{service.service_category_label ?? service.service_category_code ?? '-'}</TableCell>
                         <TableCell>{formatServicePrice(service)}</TableCell>
                         <TableCell>{service.duration_minutes !== null ? `${service.duration_minutes} min` : '-'}</TableCell>
                       </TableRow>
@@ -351,7 +321,6 @@ export function ResultsView({ filters, services, businesses }: Props) {
 function getSortValue(service: ServiceItem, field: BusinessSortField): number | string {
   if (field === 'service_id') return Number(service.service_id ?? Number.MAX_SAFE_INTEGER);
   if (field === 'service_name') return (service.service_name ?? '').toLowerCase();
-  if (field === 'category') return (service.service_category_label ?? service.service_category_code ?? '').toLowerCase();
   if (field === 'price') {
     if (typeof service.price_cents === 'number') return service.price_cents;
     if (typeof service.price_min_cents === 'number') return service.price_min_cents;

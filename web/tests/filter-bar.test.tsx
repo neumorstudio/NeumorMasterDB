@@ -43,7 +43,7 @@ const baseFilters: Filters = {
 
 describe('FilterBar', () => {
   it('debounces search and pushes URL params', async () => {
-    render(<FilterBar filters={baseFilters} businessTypes={[]} categories={[]} />);
+    render(<FilterBar filters={baseFilters} businessTypes={[]} />);
     await userEvent.type(screen.getByLabelText('Buscar'), 'spa');
 
     await waitFor(
