@@ -15,6 +15,13 @@ const maybeNumber = z
 
 const schema = z.object({
   q: z.string().trim().max(120).optional(),
+  advancedMode: z.string().trim().optional(),
+  serviceId: z.string().trim().max(120).optional(),
+  businessId: z.string().trim().max(120).optional(),
+  serviceName: z.string().trim().max(120).optional(),
+  businessName: z.string().trim().max(120).optional(),
+  currencyCode: z.string().trim().max(3).optional(),
+  durationExact: maybeNumber,
   country: z.string().trim().max(2).optional(),
   city: z.string().trim().max(80).optional(),
   region: z.string().trim().max(80).optional(),
@@ -44,6 +51,11 @@ function splitCsv(value?: string): string[] {
     .filter(Boolean);
 }
 
+function parseBoolean(value: string | undefined): boolean {
+  if (!value) return false;
+  return value === '1' || value.toLowerCase() === 'true';
+}
+
 export function parseFilters(input: Record<string, string | string[] | undefined>): Filters {
   const normalized = Object.fromEntries(
     Object.entries(input).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v]),
@@ -58,6 +70,13 @@ export function parseFilters(input: Record<string, string | string[] | undefined
 
   return {
     q: data.q ?? DEFAULT_FILTERS.q,
+    advancedMode: parseBoolean(data.advancedMode),
+    serviceId: data.serviceId ?? DEFAULT_FILTERS.serviceId,
+    businessId: data.businessId ?? DEFAULT_FILTERS.businessId,
+    serviceName: data.serviceName ?? DEFAULT_FILTERS.serviceName,
+    businessName: data.businessName ?? DEFAULT_FILTERS.businessName,
+    currencyCode: (data.currencyCode ?? DEFAULT_FILTERS.currencyCode).toUpperCase(),
+    durationExact: data.durationExact ?? DEFAULT_FILTERS.durationExact,
     country: (data.country ?? DEFAULT_FILTERS.country).toUpperCase(),
     city: data.city ?? DEFAULT_FILTERS.city,
     region: data.region ?? DEFAULT_FILTERS.region,
@@ -85,6 +104,13 @@ export function filtersToSearchParams(filters: Filters): URLSearchParams {
   };
 
   put('q', filters.q);
+  put('advancedMode', filters.advancedMode ? '1' : '');
+  put('serviceId', filters.serviceId);
+  put('businessId', filters.businessId);
+  put('serviceName', filters.serviceName);
+  put('businessName', filters.businessName);
+  put('currencyCode', filters.currencyCode);
+  put('durationExact', filters.durationExact);
   put('country', filters.country);
   put('city', filters.city);
   put('region', filters.region);

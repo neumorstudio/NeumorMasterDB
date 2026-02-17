@@ -5,6 +5,8 @@ describe('parseFilters', () => {
   it('normalizes valid input', () => {
     const filters = parseFilters({
       q: 'maquillaje',
+      advancedMode: '1',
+      serviceName: 'lifting',
       country: 'es',
       businessTypes: 'hair,nails',
       page: '2',
@@ -12,6 +14,8 @@ describe('parseFilters', () => {
     });
 
     expect(filters.q).toBe('maquillaje');
+    expect(filters.advancedMode).toBe(true);
+    expect(filters.serviceName).toBe('lifting');
     expect(filters.country).toBe('ES');
     expect(filters.businessTypes).toEqual(['hair', 'nails']);
     expect(filters.page).toBe(2);
@@ -23,5 +27,6 @@ describe('parseFilters', () => {
     expect(filters.page).toBe(1);
     expect(filters.pageSize).toBe(25);
     expect(filters.sort).toBe('relevance');
+    expect(filters.advancedMode).toBe(false);
   });
 });

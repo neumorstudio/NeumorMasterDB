@@ -115,27 +115,43 @@ function buildServiceQuery(filters: Filters, selectFields: string) {
   const params = new URLSearchParams({ select: selectFields, order: sortOrder(filters.sort) });
 
   if (filters.q.trim()) {
-    const q = filters.q.trim().replaceAll(',', ' ');
+    const q = cleanToken(filters.q);
     params.set('or', `(business_name.ilike.*${q}*,service_name.ilike.*${q}*)`);
+  }
+
+  if (filters.businessName.trim()) {
+    params.set('business_name', `ilike.*${cleanToken(filters.businessName)}*`);
+  }
+  if (filters.serviceName.trim()) {
+    params.set('service_name', `ilike.*${cleanToken(filters.serviceName)}*`);
+  }
+  if (filters.businessId.trim()) {
+    params.set('business_id', `eq.${cleanToken(filters.businessId)}`);
+  }
+  if (filters.serviceId.trim()) {
+    params.set('service_id', `eq.${cleanToken(filters.serviceId)}`);
+  }
+  if (filters.currencyCode.trim()) {
+    params.set('currency_code', `eq.${cleanToken(filters.currencyCode.toUpperCase())}`);
   }
 
   if (filters.country.trim()) {
     params.set('country_code', `eq.${filters.country.trim().toUpperCase()}`);
   }
   if (filters.city.trim()) {
-    params.set('city', `ilike.*${filters.city.trim().replaceAll(',', ' ')}*`);
+    params.set('city', `ilike.*${cleanToken(filters.city)}*`);
   }
   if (filters.region.trim()) {
-    params.set('region', `ilike.*${filters.region.trim().replaceAll(',', ' ')}*`);
+    params.set('region', `ilike.*${cleanToken(filters.region)}*`);
   }
   if (filters.businessTypes.length > 0) {
-    params.set('business_type_code', `in.(${filters.businessTypes.join(',')})`);
+    params.set('business_type_code', `in.(${filters.businessTypes.map(cleanToken).join(',')})`);
   }
   if (filters.categories.length > 0) {
-    params.set('service_category_code', `in.(${filters.categories.join(',')})`);
+    params.set('service_category_code', `in.(${filters.categories.map(cleanToken).join(',')})`);
   }
   if (filters.priceKinds.length > 0) {
-    params.set('price_kind', `in.(${filters.priceKinds.join(',')})`);
+    params.set('price_kind', `in.(${filters.priceKinds.map(cleanToken).join(',')})`);
   }
   if (filters.minPrice !== null) {
     params.set('price_cents', `gte.${filters.minPrice * 100}`);
@@ -149,8 +165,15 @@ function buildServiceQuery(filters: Filters, selectFields: string) {
   if (filters.maxDuration !== null) {
     params.append('duration_minutes', `lte.${filters.maxDuration}`);
   }
+  if (filters.durationExact !== null) {
+    params.set('duration_minutes', `eq.${filters.durationExact}`);
+  }
 
   return params;
+}
+
+function cleanToken(value: string) {
+  return value.trim().replaceAll(',', ' ').replaceAll('(', ' ').replaceAll(')', ' ');
 }
 
 export function sortOrder(sort: Filters['sort']) {

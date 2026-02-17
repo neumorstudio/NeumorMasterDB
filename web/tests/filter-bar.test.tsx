@@ -15,6 +15,13 @@ vi.mock('next/navigation', () => ({
 
 const baseFilters: Filters = {
   q: '',
+  advancedMode: false,
+  serviceId: '',
+  businessId: '',
+  serviceName: '',
+  businessName: '',
+  currencyCode: '',
+  durationExact: null,
   country: 'ES',
   city: '',
   region: '',
