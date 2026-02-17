@@ -1,15 +1,15 @@
 [theme]
-base = "dark"
-primaryColor = "#C9A86A"
-backgroundColor = "#0B0E14"
-secondaryBackgroundColor = "#121824"
-textColor = "#EAF0FF"
+base = "light"
+primaryColor = "#000000"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F7F7F7"
+textColor = "#000000"
 font = "sans serif"
 baseRadius = "large"
 buttonRadius = "full"
-borderColor = "#2A3345"
-dataframeBorderColor = "#2A3345"
-dataframeHeaderBackgroundColor = "#182033"
+borderColor = "#E4E4E4"
+dataframeBorderColor = "#E4E4E4"
+dataframeHeaderBackgroundColor = "#F3F3F3"
 showWidgetBorder = true
 showSidebarBorder = true
 
