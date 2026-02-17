@@ -87,6 +87,9 @@ def inject_styles(theme_mode: str) -> None:
         "btn_primary_bg": "#FFFFFF" if is_dark else "#000000",
         "btn_primary_text": "#000000" if is_dark else "#FFFFFF",
         "btn_primary_hover": "#E8E8E8" if is_dark else "#1B1B1B",
+        "df_header_bg": "#1A1A1A" if is_dark else "#F3F3F3",
+        "df_header_bg_hover": "#222222" if is_dark else "#EBEBEB",
+        "df_header_text": "#F5F5F5" if is_dark else "#111111",
     }
 
     st.markdown(
@@ -112,6 +115,9 @@ def inject_styles(theme_mode: str) -> None:
           --btn-primary-bg: {palette["btn_primary_bg"]};
           --btn-primary-text: {palette["btn_primary_text"]};
           --btn-primary-hover: {palette["btn_primary_hover"]};
+          --df-header-bg: {palette["df_header_bg"]};
+          --df-header-bg-hover: {palette["df_header_bg_hover"]};
+          --df-header-text: {palette["df_header_text"]};
           --radius-lg: 14px;
           --radius-md: 10px;
           --space-1: .5rem;
@@ -437,6 +443,22 @@ def inject_styles(theme_mode: str) -> None:
         [data-testid="stDataFrame"] * {{
           font-size: .88rem !important;
           color: var(--text) !important;
+        }}
+
+        [data-testid="stDataFrame"] div[style*="--gdg-bg-cell"],
+        [data-testid="stDataFrame"] div[style*="--header-height"] {{
+          --gdg-bg-header: var(--df-header-bg) !important;
+          --gdg-bg-header-hovered: var(--df-header-bg-hover) !important;
+          --gdg-bg-header-has-focus: var(--df-header-bg-hover) !important;
+          --gdg-text-header: var(--df-header-text) !important;
+          --gdg-bg-cell: var(--surface) !important;
+          --gdg-bg-cell-medium: var(--surface-alt) !important;
+          --gdg-text-dark: var(--text) !important;
+          --gdg-text-medium: var(--text-muted) !important;
+          --gdg-text-light: var(--text-muted) !important;
+          --gdg-border-color: var(--line) !important;
+          --gdg-horizontal-border-color: var(--line) !important;
+          --gdg-vertical-border-color: var(--line) !important;
         }}
 
         .pager-center {{
