@@ -1,8 +1,16 @@
+'use client';
+
 import {
   Button,
   Card,
+  CardActionArea,
   CardContent,
   Chip,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Divider,
   Stack,
   Table,
   TableBody,
@@ -14,6 +22,7 @@ import {
   Typography,
 } from '@mui/material';
 import Link from 'next/link';
+import { useMemo, useState } from 'react';
 import { formatMoney, formatServicePrice } from '@/lib/filters/format';
 import type { BusinessCard, Filters, ServiceItem } from '@/types/items';
 
@@ -23,7 +32,56 @@ type Props = {
   businesses: BusinessCard[];
 };
 
+type BusinessDetailResponse = {
+  business: {
+    business_id: string | null;
+    business_name: string;
+    business_type_label: string;
+    business_type_code: string | null;
+    country_code: string | null;
+    region: string | null;
+    city: string | null;
+    service_count: number;
+    categories: string[];
+    min_price_cents: number | null;
+    max_price_cents: number | null;
+  };
+  services: ServiceItem[];
+};
+
 export function ResultsView({ filters, services, businesses }: Props) {
+  const [businessModalOpen, setBusinessModalOpen] = useState(false);
+  const [isLoadingBusiness, setIsLoadingBusiness] = useState(false);
+  const [businessDetail, setBusinessDetail] = useState<BusinessDetailResponse | null>(null);
+  const [businessDetailError, setBusinessDetailError] = useState<string | null>(null);
+
+  const serviceRows = useMemo(() => businessDetail?.services ?? [], [businessDetail]);
+
+  const openBusinessDetail = async (businessId: string | null) => {
+    if (!businessId) return;
+    setBusinessModalOpen(true);
+    setIsLoadingBusiness(true);
+    setBusinessDetailError(null);
+
+    try {
+      const response = await fetch(`/api/businesses/${encodeURIComponent(businessId)}`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        throw new Error('No se pudo cargar el detalle del negocio.');
+      }
+
+      const json = (await response.json()) as BusinessDetailResponse;
+      setBusinessDetail(json);
+    } catch (error) {
+      setBusinessDetail(null);
+      setBusinessDetailError(error instanceof Error ? error.message : 'Error inesperado');
+    } finally {
+      setIsLoadingBusiness(false);
+    }
+  };
+
   if (filters.view === 'table') {
     return (
       <Card sx={{ mt: 2 }}>
@@ -67,30 +125,144 @@ export function ResultsView({ filters, services, businesses }: Props) {
 
   if (filters.scope === 'businesses') {
     return (
-      <Stack spacing={2} mt={2}>
-        {businesses.map((item, idx) => (
-          <Card key={`${item.business_id ?? 'biz'}-${idx}`}>
-            <CardContent>
-              <Stack spacing={1}>
-                <Typography variant="h6">{item.business_name}</Typography>
-                <Typography color="text.secondary">{item.business_type_label}</Typography>
-                <Typography>
-                  Servicios: {item.service_count} | Precio:{' '}
-                  {item.min_price_cents !== null ? formatMoney(item.min_price_cents) : 'Consultar'}
-                  {item.max_price_cents !== null && item.max_price_cents !== item.min_price_cents
-                    ? ` - ${formatMoney(item.max_price_cents)}`
-                    : ''}
-                </Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap">
-                  {item.categories.slice(0, 3).map((category) => (
-                    <Chip key={category} label={category} size="small" />
-                  ))}
-                </Stack>
+      <>
+        <Stack spacing={2} mt={2}>
+          {businesses.map((item, idx) => (
+            <Card key={`${item.business_id ?? 'biz'}-${idx}`}>
+              <CardActionArea onClick={() => void openBusinessDetail(item.business_id)}>
+                <CardContent>
+                  <Stack spacing={1}>
+                    <Typography variant="h6">{item.business_name}</Typography>
+                    <Typography color="text.secondary">{item.business_type_label}</Typography>
+                    <Typography>
+                      Servicios: {item.service_count} | Precio:{' '}
+                      {item.min_price_cents !== null ? formatMoney(item.min_price_cents) : 'Consultar'}
+                      {item.max_price_cents !== null && item.max_price_cents !== item.min_price_cents
+                        ? ` - ${formatMoney(item.max_price_cents)}`
+                        : ''}
+                    </Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                      {item.categories.slice(0, 3).map((category) => (
+                        <Chip key={category} label={category} size="small" />
+                      ))}
+                    </Stack>
+                    <Typography variant="caption" color="text.secondary">
+                      Click para ver detalle completo
+                    </Typography>
+                  </Stack>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          ))}
+        </Stack>
+
+        <Dialog
+          open={businessModalOpen}
+          onClose={() => setBusinessModalOpen(false)}
+          maxWidth="lg"
+          fullWidth
+        >
+          <DialogTitle>
+            {businessDetail?.business.business_name ?? 'Detalle de negocio'}
+          </DialogTitle>
+          <DialogContent>
+            {isLoadingBusiness ? (
+              <Stack direction="row" spacing={2} alignItems="center" py={2}>
+                <CircularProgress size={24} />
+                <Typography>Cargando datos del negocio...</Typography>
               </Stack>
-            </CardContent>
-          </Card>
-        ))}
-      </Stack>
+            ) : businessDetailError ? (
+              <Typography color="error">{businessDetailError}</Typography>
+            ) : businessDetail ? (
+              <Stack spacing={2}>
+                <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
+                  <Stack spacing={0.5}>
+                    <Typography variant="subtitle2">Business ID</Typography>
+                    <Typography>{businessDetail.business.business_id ?? '-'}</Typography>
+                  </Stack>
+                  <Stack spacing={0.5}>
+                    <Typography variant="subtitle2">Tipo</Typography>
+                    <Typography>
+                      {businessDetail.business.business_type_label}
+                      {businessDetail.business.business_type_code
+                        ? ` (${businessDetail.business.business_type_code})`
+                        : ''}
+                    </Typography>
+                  </Stack>
+                  <Stack spacing={0.5}>
+                    <Typography variant="subtitle2">Ubicacion</Typography>
+                    <Typography>
+                      {businessDetail.business.city ?? '-'} · {businessDetail.business.region ?? '-'} ·{' '}
+                      {businessDetail.business.country_code ?? '-'}
+                    </Typography>
+                  </Stack>
+                </Stack>
+
+                <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
+                  <Stack spacing={0.5}>
+                    <Typography variant="subtitle2">Servicios</Typography>
+                    <Typography>{businessDetail.business.service_count}</Typography>
+                  </Stack>
+                  <Stack spacing={0.5}>
+                    <Typography variant="subtitle2">Rango de precio</Typography>
+                    <Typography>
+                      {businessDetail.business.min_price_cents !== null
+                        ? formatMoney(businessDetail.business.min_price_cents)
+                        : 'Consultar'}
+                      {businessDetail.business.max_price_cents !== null &&
+                      businessDetail.business.max_price_cents !== businessDetail.business.min_price_cents
+                        ? ` - ${formatMoney(businessDetail.business.max_price_cents)}`
+                        : ''}
+                    </Typography>
+                  </Stack>
+                  <Stack spacing={0.5}>
+                    <Typography variant="subtitle2">Categorias</Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                      {businessDetail.business.categories.length > 0 ? (
+                        businessDetail.business.categories.map((category) => (
+                          <Chip key={category} label={category} size="small" />
+                        ))
+                      ) : (
+                        <Typography>-</Typography>
+                      )}
+                    </Stack>
+                  </Stack>
+                </Stack>
+
+                <Divider />
+
+                <Typography variant="h6">Servicios del negocio</Typography>
+                <Table size="small" aria-label="servicios del negocio">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Service ID</TableCell>
+                      <TableCell>Servicio</TableCell>
+                      <TableCell>Categoria</TableCell>
+                      <TableCell>Precio</TableCell>
+                      <TableCell>Duracion</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {serviceRows.map((service, index) => (
+                      <TableRow key={`${service.service_id ?? 'service'}-${index}`}>
+                        <TableCell>{service.service_id ?? '-'}</TableCell>
+                        <TableCell>{service.service_name ?? '-'}</TableCell>
+                        <TableCell>
+                          {service.service_category_label ?? service.service_category_code ?? '-'}
+                        </TableCell>
+                        <TableCell>{formatServicePrice(service)}</TableCell>
+                        <TableCell>
+                          {service.duration_minutes !== null ? `${service.duration_minutes} min` : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Stack>
+            ) : null}
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 

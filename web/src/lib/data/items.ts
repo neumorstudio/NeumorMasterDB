@@ -68,6 +68,37 @@ export async function getServiceById(serviceId: string): Promise<ServiceItem | n
   return result.data[0] ?? null;
 }
 
+export async function getBusinessDetail(businessId: string) {
+  const params = new URLSearchParams({
+    select: SELECT_FIELDS_FULL,
+    business_id: `eq.${cleanToken(businessId)}`,
+    order: 'service_name.asc',
+  });
+
+  const services = await fetchAllRows(params);
+  if (services.length === 0) return null;
+
+  const business = buildBusinessCards(services)[0];
+  const first = services[0];
+
+  return {
+    business: {
+      business_id: business.business_id,
+      business_name: business.business_name,
+      business_type_label: business.business_type_label,
+      business_type_code: first.business_type_code,
+      country_code: first.country_code,
+      region: first.region,
+      city: first.city,
+      service_count: business.service_count,
+      categories: business.categories,
+      min_price_cents: business.min_price_cents,
+      max_price_cents: business.max_price_cents,
+    },
+    services,
+  };
+}
+
 async function listBusinessCards(filters: Filters): Promise<PagedResult> {
   const params = buildServiceQuery(filters, SELECT_FIELDS_BUSINESS_LIGHT);
   const rows = await fetchAllRows(params);
