@@ -197,6 +197,11 @@ def init_state() -> None:
     for key, value in DEFAULT_STATE.items():
         if key not in st.session_state:
             st.session_state[key] = value
+    if st.session_state.get("f_view_mode") not in VIEW_MODE_OPTIONS:
+        st.session_state["f_view_mode"] = VIEW_MODE_OPTIONS[0]
+    valid_sort_labels = {label for label, _ in SORT_OPTIONS}
+    if st.session_state.get("f_sort_label") not in valid_sort_labels:
+        st.session_state["f_sort_label"] = SORT_OPTIONS[0][0]
     if "last_filter_signature" not in st.session_state:
         st.session_state["last_filter_signature"] = None
 
@@ -439,7 +444,12 @@ def render_service_cards(rows: list[dict[str, Any]]) -> None:
 
 
 def main() -> None:
-    st.set_page_config(page_title="Neumor Directory Atelier", page_icon="sparkles", layout="wide")
+    st.set_page_config(
+        page_title="Neumor Directory Atelier",
+        page_icon="sparkles",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
     init_state()
     inject_styles()
 
@@ -483,27 +493,7 @@ def main() -> None:
 
     with st.sidebar:
         st.markdown("---")
-        st.markdown("#### Filtros avanzados")
-        st.text_input("Pais (ISO-2)", key="f_country", max_chars=2)
-        st.text_input("Region contiene", key="f_region")
-        st.multiselect(
-            "Tipo de negocio",
-            options=list(bt_options.keys()),
-            key="f_business_types",
-            placeholder="Todos",
-        )
-        st.multiselect(
-            "Categoria de servicio",
-            options=list(cat_options.keys()),
-            key="f_categories",
-            placeholder="Todas",
-        )
-        st.multiselect(
-            "Tipo de precio",
-            options=list(price_kind_map.keys()),
-            key="f_price_kinds",
-            placeholder="Todos",
-        )
+        st.markdown("#### Ajustes de vista")
         st.selectbox("Orden", options=list(sort_map.keys()), key="f_sort_label")
         st.selectbox("Resultados por pagina", options=PAGE_SIZE_OPTIONS, key="f_page_size")
 
@@ -544,6 +534,31 @@ def main() -> None:
             st.slider("Rango de precio (EUR)", min_value=0, max_value=500, step=5, key="f_price_range")
         with q4:
             st.slider("Rango de duracion (min)", min_value=0, max_value=360, step=5, key="f_duration_range")
+
+        with st.expander("Filtros avanzados", expanded=False):
+            a_col1, a_col2 = st.columns(2)
+            with a_col1:
+                st.text_input("Pais (ISO-2)", key="f_country", max_chars=2)
+                st.text_input("Region contiene", key="f_region")
+                st.multiselect(
+                    "Tipo de negocio",
+                    options=list(bt_options.keys()),
+                    key="f_business_types",
+                    placeholder="Todos",
+                )
+            with a_col2:
+                st.multiselect(
+                    "Categoria de servicio",
+                    options=list(cat_options.keys()),
+                    key="f_categories",
+                    placeholder="Todas",
+                )
+                st.multiselect(
+                    "Tipo de precio",
+                    options=list(price_kind_map.keys()),
+                    key="f_price_kinds",
+                    placeholder="Todos",
+                )
 
         a1, a2 = st.columns([1, 1])
         a1.form_submit_button("Buscar ahora", use_container_width=True, type="primary")
@@ -635,13 +650,13 @@ def main() -> None:
         c2.caption("Prueba quitando ciudad, ampliando precio/duracion o cambiando categoria.")
         st.stop()
 
-    st.radio(
-        "Visualización",
+    view_mode = st.radio(
+        "Vista de resultados",
         VIEW_MODE_OPTIONS,
         key="f_view_mode",
         horizontal=True,
-        label_visibility="collapsed",
     )
+    st.caption(f"Modo activo: {view_mode}")
 
     display_rows: list[dict[str, Any]] = []
     for row in rows:
@@ -660,10 +675,10 @@ def main() -> None:
             }
         )
 
-    if st.session_state["f_view_mode"] in {"Tarjetas", "Mixta"}:
+    if view_mode in {"Tarjetas", "Mixta"}:
         render_service_cards(rows)
 
-    if st.session_state["f_view_mode"] in {"Tabla", "Mixta"}:
+    if view_mode in {"Tabla", "Mixta"}:
         st.dataframe(display_rows, use_container_width=True, hide_index=True)
 
     nav1, nav2, nav3 = st.columns([1, 2, 1])
