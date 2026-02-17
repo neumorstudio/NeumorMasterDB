@@ -2,10 +2,12 @@
 
 import React from 'react';
 import {
+  Backdrop,
   Box,
   Button,
   Card,
   CardContent,
+  CircularProgress,
   FormControl,
   Grid,
   InputLabel,
@@ -13,6 +15,7 @@ import {
   Select,
   Stack,
   TextField,
+  Typography,
 } from '@mui/material';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -32,13 +35,16 @@ export function FilterBar({ filters, businessTypes, categories }: Props) {
   const currentParams = useSearchParams();
 
   const [form, setForm] = useState(filters);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     setForm(filters);
+    setIsNavigating(false);
   }, [filters]);
 
   const pushFilters = (next: Filters) => {
     const params = filtersToSearchParams(next);
+    setIsNavigating(true);
     router.push(`${pathname}?${params.toString()}`);
   };
 
@@ -56,10 +62,11 @@ export function FilterBar({ filters, businessTypes, categories }: Props) {
   }, [form, filters]);
 
   return (
-    <Card>
-      <CardContent>
-        <Stack spacing={2}>
-          <Grid container spacing={2}>
+    <>
+      <Card>
+        <CardContent>
+          <Stack spacing={2}>
+            <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 label="Buscar"
@@ -121,9 +128,9 @@ export function FilterBar({ filters, businessTypes, categories }: Props) {
                 </Select>
               </FormControl>
             </Grid>
-          </Grid>
+            </Grid>
 
-          <Grid container spacing={2}>
+            <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth>
                 <InputLabel id="business-types-label">Tipo de negocio</InputLabel>
@@ -194,29 +201,38 @@ export function FilterBar({ filters, businessTypes, categories }: Props) {
                 fullWidth
               />
             </Grid>
-          </Grid>
+            </Grid>
 
-          <Box display="flex" gap={1}>
-            <Button
-              variant="contained"
-              onClick={() => pushFilters({ ...form, page: 1 })}
-              disabled={!hasChanges && currentParams.toString().length > 0}
-            >
-              Aplicar filtros
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => {
-                const defaults = { ...filters, q: '', city: '', region: '', businessTypes: [], categories: [], page: 1 };
-                setForm(defaults);
-                pushFilters(defaults);
-              }}
-            >
-              Limpiar
-            </Button>
-          </Box>
-        </Stack>
-      </CardContent>
-    </Card>
+            <Box display="flex" gap={1}>
+              <Button
+                variant="contained"
+                onClick={() => pushFilters({ ...form, page: 1 })}
+                disabled={isNavigating || (!hasChanges && currentParams.toString().length > 0)}
+              >
+                Aplicar filtros
+              </Button>
+              <Button
+                variant="outlined"
+                disabled={isNavigating}
+                onClick={() => {
+                  const defaults = { ...filters, q: '', city: '', region: '', businessTypes: [], categories: [], page: 1 };
+                  setForm(defaults);
+                  pushFilters(defaults);
+                }}
+              >
+                Limpiar
+              </Button>
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
+      <Backdrop
+        open={isNavigating}
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 10, flexDirection: 'column', gap: 2 }}
+      >
+        <CircularProgress color="inherit" />
+        <Typography variant="body1">Consultando base de datos...</Typography>
+      </Backdrop>
+    </>
   );
 }
