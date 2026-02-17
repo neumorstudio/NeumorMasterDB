@@ -5,6 +5,7 @@ describe('parseFilters', () => {
   it('normalizes valid input', () => {
     const filters = parseFilters({
       q: 'maquillaje',
+      showAll: '1',
       advancedMode: '1',
       serviceName: 'lifting',
       country: 'es',
@@ -14,6 +15,7 @@ describe('parseFilters', () => {
     });
 
     expect(filters.q).toBe('maquillaje');
+    expect(filters.showAll).toBe(true);
     expect(filters.advancedMode).toBe(true);
     expect(filters.serviceName).toBe('lifting');
     expect(filters.country).toBe('ES');

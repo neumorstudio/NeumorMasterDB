@@ -397,7 +397,7 @@ export function FilterBar({ filters, businessTypes, categories }: Props) {
               </AccordionDetails>
             </Accordion>
 
-            <Box display="flex" gap={1}>
+            <Box display="flex" gap={1} flexWrap="wrap">
               <Button
                 variant="contained"
                 onClick={() => pushFilters({ ...form, page: 1 })}
@@ -406,12 +406,20 @@ export function FilterBar({ filters, businessTypes, categories }: Props) {
                 Aplicar filtros
               </Button>
               <Button
+                variant="text"
+                disabled={isNavigating}
+                onClick={() => pushFilters({ ...form, showAll: true, page: 1 })}
+              >
+                Mostrar todo
+              </Button>
+              <Button
                 variant="outlined"
                 disabled={isNavigating}
                 onClick={() => {
                   const defaults = {
                     ...filters,
                     q: '',
+                    showAll: false,
                     serviceId: '',
                     businessId: '',
                     serviceName: '',

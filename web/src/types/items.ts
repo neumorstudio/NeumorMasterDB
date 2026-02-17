@@ -10,6 +10,7 @@ export type CardScope = 'businesses' | 'services';
 
 export type Filters = {
   q: string;
+  showAll: boolean;
   advancedMode: boolean;
   serviceId: string;
   businessId: string;

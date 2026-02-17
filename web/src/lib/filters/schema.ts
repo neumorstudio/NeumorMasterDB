@@ -15,6 +15,7 @@ const maybeNumber = z
 
 const schema = z.object({
   q: z.string().trim().max(120).optional(),
+  showAll: z.string().trim().optional(),
   advancedMode: z.string().trim().optional(),
   serviceId: z.string().trim().max(120).optional(),
   businessId: z.string().trim().max(120).optional(),
@@ -70,6 +71,7 @@ export function parseFilters(input: Record<string, string | string[] | undefined
 
   return {
     q: data.q ?? DEFAULT_FILTERS.q,
+    showAll: parseBoolean(data.showAll),
     advancedMode: parseBoolean(data.advancedMode),
     serviceId: data.serviceId ?? DEFAULT_FILTERS.serviceId,
     businessId: data.businessId ?? DEFAULT_FILTERS.businessId,
@@ -104,6 +106,7 @@ export function filtersToSearchParams(filters: Filters): URLSearchParams {
   };
 
   put('q', filters.q);
+  put('showAll', filters.showAll ? '1' : '');
   put('advancedMode', filters.advancedMode ? '1' : '');
   put('serviceId', filters.serviceId);
   put('businessId', filters.businessId);

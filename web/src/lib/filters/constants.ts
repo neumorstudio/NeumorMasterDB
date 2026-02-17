@@ -29,6 +29,7 @@ export const CARD_SCOPE_OPTIONS: Array<{ key: CardScope; label: string }> = [
 
 export const DEFAULT_FILTERS = {
   q: '',
+  showAll: false,
   advancedMode: false,
   serviceId: '',
   businessId: '',
