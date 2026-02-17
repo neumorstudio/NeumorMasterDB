@@ -163,6 +163,38 @@ def inject_styles(theme_mode: str) -> None:
           color: var(--text-muted) !important;
         }}
 
+        [data-testid="stDialog"] [role="dialog"] {{
+          background: var(--surface) !important;
+          border: 1px solid var(--line) !important;
+          border-radius: 18px !important;
+          box-shadow: 0 10px 36px rgba(0, 0, 0, 0.24) !important;
+          color: var(--text) !important;
+        }}
+
+        [data-testid="stDialog"] [role="dialog"] [data-testid="stMarkdownContainer"] h1,
+        [data-testid="stDialog"] [role="dialog"] [data-testid="stMarkdownContainer"] h2,
+        [data-testid="stDialog"] [role="dialog"] [data-testid="stMarkdownContainer"] h3,
+        [data-testid="stDialog"] [role="dialog"] [data-testid="stMarkdownContainer"] h4,
+        [data-testid="stDialog"] [role="dialog"] [data-testid="stMarkdownContainer"] p,
+        [data-testid="stDialog"] [role="dialog"] [data-testid="stMarkdownContainer"] li,
+        [data-testid="stDialog"] [role="dialog"] [data-testid="stCaptionContainer"] p {{
+          color: var(--text) !important;
+        }}
+
+        [data-testid="stDialog"] [role="dialog"] [data-testid="stCaptionContainer"] p {{
+          color: var(--text-muted) !important;
+        }}
+
+        [data-testid="stDialog"] [role="dialog"] code {{
+          background: var(--surface-alt) !important;
+          color: var(--text) !important;
+          border: 1px solid var(--line) !important;
+        }}
+
+        [data-testid="stDialog"] [role="dialog"] button[aria-label="Close"] {{
+          color: var(--text) !important;
+        }}
+
         .hero-shell {{
           border: 1px solid var(--line);
           border-radius: var(--radius-lg);
@@ -440,6 +472,8 @@ def init_state() -> None:
             st.session_state[key] = value
     if st.session_state.get("ui_theme_mode") not in THEME_MODE_OPTIONS:
         st.session_state["ui_theme_mode"] = THEME_MODE_OPTIONS[0]
+    if "last_applied_theme_mode" not in st.session_state:
+        st.session_state["last_applied_theme_mode"] = st.session_state["ui_theme_mode"]
     if st.session_state.get("f_view_mode") not in VIEW_MODE_OPTIONS:
         st.session_state["f_view_mode"] = VIEW_MODE_OPTIONS[0]
     if st.session_state.get("f_card_scope") not in CARD_SCOPE_OPTIONS:
@@ -993,7 +1027,11 @@ def main() -> None:
                 placeholder="anon o service role",
             )
 
-    inject_styles(st.session_state.get("ui_theme_mode", THEME_MODE_OPTIONS[0]))
+    current_theme = st.session_state.get("ui_theme_mode", THEME_MODE_OPTIONS[0])
+    if st.session_state.get("last_applied_theme_mode") != current_theme:
+        st.session_state["last_applied_theme_mode"] = current_theme
+        clear_selected_details()
+    inject_styles(current_theme)
 
     if not supabase_url or not api_key:
         st.warning("Configura SUPABASE_URL y API key para continuar.")
