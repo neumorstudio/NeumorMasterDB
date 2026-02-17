@@ -142,6 +142,43 @@ def inject_styles(theme_mode: str) -> None:
           backdrop-filter: blur(8px);
         }}
 
+        [data-testid="stToolbar"],
+        [data-testid="stToolbarActions"],
+        [data-testid="stMainMenu"],
+        [data-testid="stSidebarCollapseButton"] {{
+          color: var(--text) !important;
+        }}
+
+        [data-testid="stToolbar"] button,
+        [data-testid="stToolbar"] a,
+        [data-testid="stMainMenu"] button,
+        [data-testid="stSidebarCollapseButton"] button,
+        [data-testid="stToolbar"] [data-testid="stBaseButton-header"],
+        [data-testid="stToolbar"] [data-testid="stBaseButton-headerNoPadding"] {{
+          color: var(--text) !important;
+          border-color: transparent !important;
+          background: transparent !important;
+        }}
+
+        [data-testid="stToolbar"] button:hover,
+        [data-testid="stToolbar"] a:hover,
+        [data-testid="stMainMenu"] button:hover,
+        [data-testid="stSidebarCollapseButton"] button:hover {{
+          background: var(--surface-alt) !important;
+          border-color: var(--line) !important;
+        }}
+
+        [data-testid="stToolbar"] svg,
+        [data-testid="stToolbar"] svg *,
+        [data-testid="stMainMenu"] svg,
+        [data-testid="stMainMenu"] svg *,
+        [data-testid="stSidebarCollapseButton"] svg,
+        [data-testid="stSidebarCollapseButton"] svg * {{
+          fill: var(--text) !important;
+          stroke: var(--text) !important;
+          color: var(--text) !important;
+        }}
+
         [data-testid="stSidebar"] > div:first-child {{
           background: var(--surface);
           border-right: 1px solid var(--line);
@@ -356,6 +393,12 @@ def inject_styles(theme_mode: str) -> None:
           border-color: var(--btn-primary-bg);
         }}
 
+        .stButton > button[kind="primary"] *,
+        [data-testid="stFormSubmitButton"] button[kind="primary"] * {{
+          color: var(--btn-primary-text) !important;
+          fill: var(--btn-primary-text) !important;
+        }}
+
         .stButton > button:hover,
         .stDownloadButton > button:hover,
         [data-testid="stFormSubmitButton"] button:hover {{
@@ -368,6 +411,12 @@ def inject_styles(theme_mode: str) -> None:
         [data-testid="stFormSubmitButton"] button[kind="primary"]:hover {{
           background: var(--btn-primary-hover);
           color: var(--btn-primary-text);
+        }}
+
+        .stButton > button[kind="primary"]:hover *,
+        [data-testid="stFormSubmitButton"] button[kind="primary"]:hover * {{
+          color: var(--btn-primary-text) !important;
+          fill: var(--btn-primary-text) !important;
         }}
 
         [data-baseweb="input"] input,
@@ -433,6 +482,8 @@ def inject_styles(theme_mode: str) -> None:
         }}
 
         [data-testid="stDataFrame"],
+        [data-testid="stDataFrameResizable"],
+        .stDataFrameGlideDataEditor,
         [data-testid="stTable"] {{
           border: 1px solid var(--line);
           border-radius: var(--radius-lg);
@@ -440,18 +491,24 @@ def inject_styles(theme_mode: str) -> None:
           background: var(--surface);
         }}
 
-        [data-testid="stDataFrame"] * {{
+        [data-testid="stDataFrame"] *,
+        [data-testid="stDataFrameResizable"] *,
+        .stDataFrameGlideDataEditor * {{
           font-size: .88rem !important;
           color: var(--text) !important;
         }}
 
-        [data-testid="stDataFrame"] div[style*="--gdg-accent-color"],
-        [data-testid="stDataFrame"] div[style*="--gdg-bg-cell"],
-        [data-testid="stDataFrame"] div[style*="--header-height"] {{
+        [data-testid="stDataFrameResizable"],
+        .stDataFrameGlideDataEditor,
+        [data-testid="stDataFrameResizable"] div[style*="--gdg-accent-color"],
+        [data-testid="stDataFrameResizable"] div[style*="--gdg-bg-cell"],
+        [data-testid="stDataFrameResizable"] div[style*="--header-height"] {{
           --gdg-bg-header: var(--df-header-bg) !important;
           --gdg-bg-header-hovered: var(--df-header-bg-hover) !important;
           --gdg-bg-header-has-focus: var(--df-header-bg-hover) !important;
           --gdg-text-header: var(--df-header-text) !important;
+          --gdg-bg-icon-header: var(--df-header-text) !important;
+          --gdg-fg-icon-header: var(--df-header-text) !important;
           --gdg-bg-cell: var(--surface) !important;
           --gdg-bg-cell-medium: var(--surface-alt) !important;
           --gdg-text-dark: var(--text) !important;
@@ -462,7 +519,8 @@ def inject_styles(theme_mode: str) -> None:
           --gdg-vertical-border-color: var(--line) !important;
         }}
 
-        [data-testid="stDataFrame"] [style*="--gdg-bg-header"] {{
+        [data-testid="stDataFrameResizable"][style*="--gdg-bg-header"],
+        [data-testid="stDataFrameResizable"] [style*="--gdg-bg-header"] {{
           --gdg-bg-header: {palette["df_header_bg"]} !important;
           --gdg-bg-header-hovered: {palette["df_header_bg_hover"]} !important;
           --gdg-bg-header-has-focus: {palette["df_header_bg_hover"]} !important;
