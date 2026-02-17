@@ -1,10 +1,17 @@
 [theme]
-base = "light"
-primaryColor = "#2E7D32"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F6F7F9"
-textColor = "#111111"
+base = "dark"
+primaryColor = "#C9A86A"
+backgroundColor = "#0B0E14"
+secondaryBackgroundColor = "#121824"
+textColor = "#EAF0FF"
 font = "sans serif"
+baseRadius = "large"
+buttonRadius = "full"
+borderColor = "#2A3345"
+dataframeBorderColor = "#2A3345"
+dataframeHeaderBackgroundColor = "#182033"
+showWidgetBorder = true
+showSidebarBorder = true
 
 [server]
 headless = true

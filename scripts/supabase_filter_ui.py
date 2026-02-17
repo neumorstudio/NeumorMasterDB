@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Interfaz moderna y amigable para buscar negocios/servicios en Supabase."""
+"""UI premium + usable para explorar negocios y servicios guardados en Supabase."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ import streamlit as st
 
 PAGE_SIZE_OPTIONS = [25, 50, 100, 200]
 SORT_OPTIONS: list[tuple[str, str]] = [
-    ("Negocio (A-Z)", "business_name.asc,service_name.asc"),
+    ("Relevancia (Negocio A-Z)", "business_name.asc,service_name.asc"),
     ("Precio: menor a mayor", "price_cents.asc.nullslast,service_name.asc"),
     ("Precio: mayor a menor", "price_cents.desc.nullslast,service_name.asc"),
     ("Duracion: corta a larga", "duration_minutes.asc.nullslast,service_name.asc"),
@@ -27,6 +27,7 @@ PRICE_KIND_OPTIONS: list[tuple[str, str]] = [
     ("Rango", "range"),
     ("Consultar", "quote"),
 ]
+VIEW_MODE_OPTIONS = ["Tarjetas", "Mixta", "Tabla"]
 
 DEFAULT_STATE: dict[str, Any] = {
     "f_search": "",
@@ -40,7 +41,7 @@ DEFAULT_STATE: dict[str, Any] = {
     "f_duration_range": (0, 240),
     "f_sort_label": SORT_OPTIONS[0][0],
     "f_page_size": PAGE_SIZE_OPTIONS[0],
-    "f_view_mode": "Tabla",
+    "f_view_mode": VIEW_MODE_OPTIONS[0],
     "page": 1,
 }
 
@@ -49,136 +50,142 @@ def inject_styles() -> None:
     st.markdown(
         """
         <style>
-        :root {
-          --surface: rgba(14, 18, 26, 0.72);
-          --surface-strong: rgba(16, 22, 34, 0.86);
-          --text-strong: #f4f7ff;
-          --text-soft: #b5bfd3;
-          --accent: #5de2ff;
-          --accent-2: #86ffa8;
-          --border: rgba(118, 138, 170, 0.28);
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap');
+
+        html, body, [class*="css"], [data-testid="stMarkdownContainer"] p {
+          font-family: "Manrope", sans-serif !important;
+        }
+        h1, h2, h3 {
+          font-family: "Playfair Display", serif !important;
+          letter-spacing: .01em;
         }
         [data-testid="stAppViewContainer"] {
           background:
-            radial-gradient(1000px 460px at -10% -10%, rgba(56, 160, 255, 0.22), transparent 60%),
-            radial-gradient(900px 380px at 110% -20%, rgba(110, 84, 250, 0.20), transparent 58%),
-            linear-gradient(180deg, #090c12 0%, #0b1018 42%, #090d14 100%);
-          color: var(--text-strong);
+            radial-gradient(950px 420px at 0% -10%, rgba(201, 168, 106, .12), transparent 60%),
+            radial-gradient(1100px 520px at 100% -20%, rgba(64, 98, 181, .16), transparent 62%),
+            linear-gradient(180deg, #0B0E14 0%, #0A1018 100%);
         }
         [data-testid="stSidebar"] > div:first-child {
-          background: linear-gradient(180deg, rgba(10, 14, 22, 0.95), rgba(9, 12, 20, 0.93));
-          border-right: 1px solid var(--border);
+          background: linear-gradient(180deg, #0E1421 0%, #0C111B 100%);
         }
         .block-container {
-          padding-top: 1.2rem;
-          padding-bottom: 2.25rem;
           max-width: 1320px;
+          padding-top: 1.2rem;
+          padding-bottom: 2rem;
         }
         .hero-shell {
-          background: linear-gradient(135deg, rgba(16, 22, 36, 0.88), rgba(13, 18, 30, 0.68));
-          border: 1px solid var(--border);
-          border-radius: 20px;
-          padding: 1.05rem 1.2rem 1.15rem 1.2rem;
-          box-shadow: 0 12px 36px rgba(0, 0, 0, 0.30);
+          border: 1px solid #2A3345;
+          border-radius: 18px;
+          background: linear-gradient(125deg, rgba(18, 24, 36, .88), rgba(13, 19, 31, .72));
+          box-shadow: 0 16px 42px rgba(0, 0, 0, 0.30);
+          padding: 1.25rem 1.35rem;
           margin-bottom: 1rem;
         }
         .hero-kicker {
-          color: var(--accent);
-          letter-spacing: .09em;
           text-transform: uppercase;
-          font-size: .72rem;
+          letter-spacing: .12em;
+          color: #C9A86A;
           font-weight: 700;
-          margin-bottom: .2rem;
+          font-size: .74rem;
         }
         .hero-title {
-          margin: 0;
-          font-size: clamp(1.45rem, 2.2vw, 2.1rem);
+          margin: .35rem 0 .45rem 0;
+          font-size: clamp(1.55rem, 2.8vw, 2.35rem);
           line-height: 1.1;
-          font-weight: 700;
-          color: var(--text-strong);
+          color: #F4F7FF;
         }
         .hero-sub {
-          margin-top: .45rem;
-          color: var(--text-soft);
-          font-size: .96rem;
-          max-width: 760px;
+          color: #AEB9CF;
+          font-size: .98rem;
+          max-width: 860px;
+          line-height: 1.5;
         }
-        .badge-wrap {
+        .panel-shell {
+          border: 1px solid #2A3345;
+          border-radius: 16px;
+          background: linear-gradient(180deg, rgba(16, 23, 35, .72), rgba(14, 20, 31, .72));
+          padding: 1rem 1rem .8rem 1rem;
+          margin: .65rem 0 1rem 0;
+        }
+        .section-kicker {
+          text-transform: uppercase;
+          letter-spacing: .11em;
+          color: #8D9FBE;
+          font-weight: 700;
+          font-size: .72rem;
+          margin-bottom: .25rem;
+        }
+        .chip-row {
           display: flex;
           flex-wrap: wrap;
           gap: .42rem;
-          margin: .35rem 0 .1rem 0;
+          margin-top: .35rem;
         }
-        .badge-pill {
-          display: inline-flex;
-          align-items: center;
+        .chip {
           border-radius: 999px;
-          background: rgba(93, 226, 255, 0.12);
-          border: 1px solid rgba(93, 226, 255, 0.28);
-          color: #d9f6ff;
+          padding: .2rem .62rem;
+          border: 1px solid rgba(166, 183, 216, .30);
+          background: rgba(174, 185, 207, .10);
+          color: #D9E4FB;
           font-size: .78rem;
-          padding: .18rem .58rem;
-          line-height: 1.1;
         }
-        .business-card {
-          border-radius: 16px;
-          border: 1px solid var(--border);
-          background: linear-gradient(160deg, var(--surface-strong), rgba(12, 17, 27, 0.85));
-          padding: .86rem .88rem .84rem .88rem;
-          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.23);
-          min-height: 130px;
-        }
-        .business-card h4 {
-          margin: 0;
-          color: #f2f5ff;
-          font-size: .98rem;
-          line-height: 1.2;
-        }
-        .business-meta {
-          margin-top: .4rem;
-          color: var(--text-soft);
-          font-size: .79rem;
-        }
-        .business-kpi {
-          margin-top: .48rem;
-          color: #e5ebff;
-          font-size: .82rem;
-        }
-        .filters-hint {
-          margin: .18rem 0 0.55rem 0;
-          font-size: .86rem;
-          color: var(--text-soft);
-        }
-        [data-testid="stMetric"] {
-          background: linear-gradient(150deg, rgba(16, 22, 34, 0.78), rgba(12, 17, 27, 0.72));
-          border: 1px solid var(--border);
+        .service-card {
+          border: 1px solid #2A3345;
           border-radius: 14px;
-          padding: .56rem .72rem;
+          background: linear-gradient(160deg, rgba(17, 24, 37, .95), rgba(13, 18, 29, .95));
+          box-shadow: 0 10px 28px rgba(0, 0, 0, .20);
+          padding: .85rem .9rem;
+          margin-bottom: .72rem;
+          min-height: 156px;
         }
-        [data-testid="stMetricLabel"] p {
-          color: var(--text-soft);
-          font-weight: 600;
-          letter-spacing: .01em;
-        }
-        [data-testid="stMetricValue"] {
-          color: #f6f8ff;
+        .service-title {
+          margin: 0;
+          color: #F6F8FF;
+          font-size: .98rem;
+          line-height: 1.3;
           font-weight: 700;
         }
-        .stButton > button {
-          border-radius: 12px;
-          border: 1px solid rgba(120, 143, 180, 0.44);
-          background: linear-gradient(180deg, rgba(19, 27, 41, 0.92), rgba(13, 19, 30, 0.94));
-          color: #eef3ff;
-          font-weight: 600;
+        .service-business {
+          margin: .3rem 0 .45rem 0;
+          color: #B9C6DF;
+          font-size: .83rem;
         }
-        .stDownloadButton > button {
-          border-radius: 12px;
-          border: 1px solid rgba(120, 143, 180, 0.44);
+        .service-meta {
+          color: #DCE6FA;
+          font-size: .82rem;
+          margin-top: .24rem;
         }
-        [data-testid="stDataFrame"] {
-          border: 1px solid var(--border);
+        .service-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: .35rem;
+          margin-top: .52rem;
+        }
+        .service-tag {
+          font-size: .74rem;
+          color: #C5D4F0;
+          border: 1px solid rgba(95, 123, 177, .45);
+          background: rgba(86, 116, 173, .13);
+          border-radius: 999px;
+          padding: .15rem .5rem;
+        }
+        [data-testid="stMetric"] {
+          border: 1px solid #2A3345;
           border-radius: 14px;
-          overflow: hidden;
+          background: linear-gradient(160deg, rgba(18, 25, 38, .72), rgba(13, 18, 29, .72));
+          padding: .58rem .7rem;
+        }
+        [data-testid="stMetricLabel"] p {
+          font-weight: 600;
+          color: #9DB0D3;
+        }
+        [data-testid="stMetricValue"] {
+          color: #F6F8FF;
+          font-weight: 750;
+        }
+        .stButton > button, .stDownloadButton > button {
+          font-weight: 650;
+          border-width: 1px;
         }
         </style>
         """,
@@ -200,54 +207,22 @@ def reset_filters() -> None:
     st.session_state["last_filter_signature"] = None
 
 
-def active_filters_summary(
-    *,
-    search: str,
-    country_code: str,
-    city_like: str,
-    region_like: str,
-    business_type_labels: list[str],
-    category_labels: list[str],
-    price_kind_labels: list[str],
-    price_range: tuple[int, int],
-    duration_range: tuple[int, int],
-) -> list[str]:
-    items: list[str] = []
-    if search:
-        items.append(f"Busqueda: {search}")
-    if country_code and country_code.upper() != "ES":
-        items.append(f"Pais: {country_code.upper()}")
-    if city_like:
-        items.append(f"Ciudad: {city_like}")
-    if region_like:
-        items.append(f"Region: {region_like}")
-    if business_type_labels:
-        items.append(f"Tipo: {', '.join(business_type_labels)}")
-    if category_labels:
-        items.append(f"Categoria: {', '.join(category_labels)}")
-    if price_kind_labels:
-        items.append(f"Precio: {', '.join(price_kind_labels)}")
-    if price_range != DEFAULT_STATE["f_price_range"]:
-        items.append(f"EUR: {price_range[0]}-{price_range[1]}")
-    if duration_range != DEFAULT_STATE["f_duration_range"]:
-        items.append(f"Duracion: {duration_range[0]}-{duration_range[1]} min")
-    return items
+def read_setting(name: str) -> str:
+    value = os.getenv(name, "").strip()
+    if value:
+        return value
+    try:
+        secret_value = st.secrets.get(name, "")
+        if isinstance(secret_value, str):
+            return secret_value.strip()
+    except Exception:  # noqa: BLE001 - st.secrets puede no existir localmente
+        return ""
+    return ""
 
 
-def render_active_badges(items: list[str]) -> None:
-    if not items:
-        st.caption("Sin filtros activos. Estás viendo todos los datos disponibles.")
-        return
-    html_badges = "".join(f"<span class='badge-pill'>{html.escape(item)}</span>" for item in items)
-    st.markdown(f"<div class='badge-wrap'>{html_badges}</div>", unsafe_allow_html=True)
-
-
-@st.cache_data(ttl=120)
+@st.cache_data(ttl=180)
 def fetch_reference_data(base_url: str, api_key: str) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
-    headers = {
-        "apikey": api_key,
-        "Authorization": f"Bearer {api_key}",
-    }
+    headers = {"apikey": api_key, "Authorization": f"Bearer {api_key}"}
     bt_resp = requests.get(
         f"{base_url}/rest/v1/business_types",
         headers=headers,
@@ -295,37 +270,26 @@ def build_filters(
 
     if country_code.strip():
         params.append(("country_code", f"eq.{country_code.strip().upper()}"))
-
     if city_like.strip():
-        city = city_like.strip().replace(",", " ")
-        params.append(("city", f"ilike.*{city}*"))
-
+        params.append(("city", f"ilike.*{city_like.strip().replace(',', ' ')}*"))
     if region_like.strip():
-        region = region_like.strip().replace(",", " ")
-        params.append(("region", f"ilike.*{region}*"))
+        params.append(("region", f"ilike.*{region_like.strip().replace(',', ' ')}*"))
 
     if business_types:
-        joined = ",".join(business_types)
-        params.append(("business_type_code", f"in.({joined})"))
-
+        params.append(("business_type_code", f"in.({','.join(business_types)})"))
     if categories:
-        joined = ",".join(categories)
-        params.append(("service_category_code", f"in.({joined})"))
-
+        params.append(("service_category_code", f"in.({','.join(categories)})"))
     if price_kinds:
-        joined = ",".join(price_kinds)
-        params.append(("price_kind", f"in.({joined})"))
+        params.append(("price_kind", f"in.({','.join(price_kinds)})"))
 
     if min_price is not None:
         params.append(("price_cents", f"gte.{min_price}"))
     if max_price is not None:
         params.append(("price_cents", f"lte.{max_price}"))
-
     if min_duration is not None:
         params.append(("duration_minutes", f"gte.{min_duration}"))
     if max_duration is not None:
         params.append(("duration_minutes", f"lte.{max_duration}"))
-
     return params
 
 
@@ -338,7 +302,6 @@ def fetch_rows(
 ) -> tuple[list[dict[str, Any]], int]:
     from_row = max(0, (page - 1) * page_size)
     to_row = from_row + page_size - 1
-
     headers = {
         "apikey": api_key,
         "Authorization": f"Bearer {api_key}",
@@ -346,7 +309,6 @@ def fetch_rows(
         "Range-Unit": "items",
         "Range": f"{from_row}-{to_row}",
     }
-
     resp = requests.get(
         f"{base_url}/rest/v1/v_service_search",
         headers=headers,
@@ -374,6 +336,24 @@ def format_money(cents: int | None, currency: str = "EUR") -> str:
     return f"{value:,.2f} {symbol}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
+def format_service_price(row: dict[str, Any]) -> str:
+    currency = row.get("currency_code") or "EUR"
+    kind = (row.get("price_kind") or "").lower()
+    fixed = row.get("price_cents")
+    min_cents = row.get("price_min_cents")
+    max_cents = row.get("price_max_cents")
+
+    if kind == "fixed" and isinstance(fixed, int):
+        return format_money(fixed, currency)
+    if kind == "from" and isinstance(min_cents, int):
+        return f"Desde {format_money(min_cents, currency)}"
+    if kind == "range" and isinstance(min_cents, int) and isinstance(max_cents, int):
+        return f"{format_money(min_cents, currency)} - {format_money(max_cents, currency)}"
+    if isinstance(fixed, int):
+        return format_money(fixed, currency)
+    return "Consultar"
+
+
 def rows_to_csv(rows: list[dict[str, Any]]) -> str:
     if not rows:
         return ""
@@ -384,88 +364,84 @@ def rows_to_csv(rows: list[dict[str, Any]]) -> str:
     return buffer.getvalue()
 
 
-def read_setting(name: str) -> str:
-    value = os.getenv(name, "").strip()
-    if value:
-        return value
-    try:
-        secret_value = st.secrets.get(name, "")
-        if isinstance(secret_value, str):
-            return secret_value.strip()
-    except Exception:  # noqa: BLE001 - st.secrets puede no existir localmente
-        return ""
-    return ""
+def active_filters_summary(
+    *,
+    search: str,
+    country_code: str,
+    city_like: str,
+    region_like: str,
+    business_type_labels: list[str],
+    category_labels: list[str],
+    price_kind_labels: list[str],
+    price_range: tuple[int, int],
+    duration_range: tuple[int, int],
+) -> list[str]:
+    items: list[str] = []
+    if search:
+        items.append(f"Busqueda: {search}")
+    if country_code and country_code.upper() != "ES":
+        items.append(f"Pais: {country_code.upper()}")
+    if city_like:
+        items.append(f"Ciudad: {city_like}")
+    if region_like:
+        items.append(f"Region: {region_like}")
+    if business_type_labels:
+        items.append(f"Tipo: {', '.join(business_type_labels)}")
+    if category_labels:
+        items.append(f"Categoria: {', '.join(category_labels)}")
+    if price_kind_labels:
+        items.append(f"Precio: {', '.join(price_kind_labels)}")
+    if price_range != DEFAULT_STATE["f_price_range"]:
+        items.append(f"EUR: {price_range[0]}-{price_range[1]}")
+    if duration_range != DEFAULT_STATE["f_duration_range"]:
+        items.append(f"Duracion: {duration_range[0]}-{duration_range[1]} min")
+    return items
 
 
-def build_business_summary(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    summary: dict[str, dict[str, Any]] = {}
-    for row in rows:
-        business_key = row.get("business_id") or row.get("business_name") or "sin-id"
-        if business_key not in summary:
-            summary[business_key] = {
-                "business_name": row.get("business_name") or "Sin nombre",
-                "business_type_label": row.get("business_type_label") or row.get("business_type_code") or "-",
-                "city": row.get("city") or "-",
-                "service_count": 0,
-                "min_price_cents": None,
-            }
-        summary_row = summary[business_key]
-        summary_row["service_count"] += 1
-        price_cents = row.get("price_cents")
-        if isinstance(price_cents, int):
-            current_min = summary_row["min_price_cents"]
-            if current_min is None or price_cents < current_min:
-                summary_row["min_price_cents"] = price_cents
-
-    ordered = sorted(
-        summary.values(),
-        key=lambda item: (-item["service_count"], str(item["business_name"]).lower()),
-    )
-    return ordered
-
-
-def render_business_cards(summary_rows: list[dict[str, Any]], *, max_cards: int = 6) -> None:
-    if not summary_rows:
+def render_active_chips(items: list[str]) -> None:
+    if not items:
+        st.caption("Sin filtros activos. Estás viendo todo el catálogo disponible.")
         return
-    st.markdown("#### Negocios destacados en esta pagina")
-    cols = st.columns(3)
-    for idx, item in enumerate(summary_rows[:max_cards]):
-        price_label = (
-            format_money(item["min_price_cents"], "EUR")
-            if isinstance(item["min_price_cents"], int)
-            else "Consultar"
+    chips_html = "".join(f"<span class='chip'>{html.escape(item)}</span>" for item in items)
+    st.markdown(f"<div class='chip-row'>{chips_html}</div>", unsafe_allow_html=True)
+
+
+def render_service_cards(rows: list[dict[str, Any]]) -> None:
+    cols = st.columns(2, gap="medium")
+    for idx, row in enumerate(rows):
+        service_name = html.escape(str(row.get("service_name") or "Servicio sin nombre"))
+        business_name = html.escape(str(row.get("business_name") or "Negocio sin nombre"))
+        city = html.escape(str(row.get("city") or "-"))
+        region = html.escape(str(row.get("region") or "-"))
+        category = html.escape(str(row.get("service_category_label") or row.get("service_category_code") or "Sin categoria"))
+        business_type = html.escape(str(row.get("business_type_label") or row.get("business_type_code") or "Sin tipo"))
+        duration = (
+            f"{row.get('duration_minutes')} min"
+            if row.get("duration_minutes") is not None
+            else "Duracion no informada"
         )
-        card_html = (
-            "<div class='business-card'>"
-            f"<h4>{html.escape(str(item['business_name']))}</h4>"
-            f"<div class='business-meta'>{html.escape(str(item['business_type_label']))} · "
-            f"{html.escape(str(item['city']))}</div>"
-            f"<div class='business-kpi'>Servicios visibles: <strong>{item['service_count']}</strong></div>"
-            f"<div class='business-kpi'>Desde: <strong>{html.escape(price_label)}</strong></div>"
+        price_label = html.escape(format_service_price(row))
+        card = (
+            "<div class='service-card'>"
+            f"<h4 class='service-title'>{service_name}</h4>"
+            f"<div class='service-business'>{business_name}</div>"
+            f"<div class='service-meta'><strong>Precio:</strong> {price_label}</div>"
+            f"<div class='service-meta'><strong>Duracion:</strong> {html.escape(duration)}</div>"
+            f"<div class='service-meta'><strong>Ubicacion:</strong> {city} · {region}</div>"
+            "<div class='service-tags'>"
+            f"<span class='service-tag'>{category}</span>"
+            f"<span class='service-tag'>{business_type}</span>"
+            "</div>"
             "</div>"
         )
-        with cols[idx % 3]:
-            st.markdown(card_html, unsafe_allow_html=True)
+        with cols[idx % 2]:
+            st.markdown(card, unsafe_allow_html=True)
 
 
 def main() -> None:
-    st.set_page_config(page_title="Directorio Supabase", page_icon="search", layout="wide")
+    st.set_page_config(page_title="Neumor Directory Atelier", page_icon="sparkles", layout="wide")
     init_state()
     inject_styles()
-
-    st.markdown(
-        """
-        <div class="hero-shell">
-          <div class="hero-kicker">Supabase Explorer</div>
-          <h1 class="hero-title">Buscador de negocios y servicios</h1>
-          <div class="hero-sub">
-            Interfaz simple para filtrar por ciudad, precio, duracion y categorias.
-            Mantiene toda la potencia de filtros, pero con una experiencia mas clara para uso diario.
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
     supabase_url = read_setting("SUPABASE_URL")
     api_key = (
@@ -475,21 +451,29 @@ def main() -> None:
     )
 
     with st.sidebar:
-        st.subheader("Conexion")
-        st.caption("Usa anon key para lectura, service role para gestion completa.")
-        supabase_url = st.text_input("SUPABASE_URL", value=supabase_url, placeholder="https://tu-proyecto.supabase.co")
-        api_key = st.text_input("API key", value=api_key, type="password", placeholder="sb_secret_... o anon...")
-        st.markdown("---")
-        st.caption("Consejo: guarda estas variables en Secrets para no escribirlas cada vez.")
+        st.markdown("### Neumor Directory")
+        st.caption("Panel de control para búsqueda y filtrado.")
+        with st.expander("Conexion", expanded=not bool(supabase_url and api_key)):
+            supabase_url = st.text_input(
+                "SUPABASE_URL",
+                value=supabase_url,
+                placeholder="https://tu-proyecto.supabase.co",
+            )
+            api_key = st.text_input(
+                "API key",
+                value=api_key,
+                type="password",
+                placeholder="anon o service role",
+            )
 
     if not supabase_url or not api_key:
-        st.warning("Configura SUPABASE_URL y API key para consultar los datos.")
+        st.warning("Configura SUPABASE_URL y API key para continuar.")
         st.stop()
 
     try:
         business_type_rows, category_rows = fetch_reference_data(supabase_url, api_key)
     except requests.RequestException as exc:
-        st.error(f"Error conectando con Supabase: {exc}")
+        st.error(f"No se pudo conectar con Supabase: {exc}")
         st.stop()
 
     bt_options = {row["label"]: row["code"] for row in business_type_rows}
@@ -497,97 +481,76 @@ def main() -> None:
     price_kind_map = {label: code for label, code in PRICE_KIND_OPTIONS}
     sort_map = {label: code for label, code in SORT_OPTIONS}
 
-    with st.expander("Como usarlo en 20 segundos", expanded=False):
-        st.markdown(
-            "- Escribe texto libre: negocio o servicio.\n"
-            "- Ajusta precio y duracion si necesitas afinar.\n"
-            "- Usa filtros avanzados solo cuando haga falta.\n"
-            "- Exporta CSV de la pagina actual con un clic."
+    with st.sidebar:
+        st.markdown("---")
+        st.markdown("#### Filtros avanzados")
+        st.text_input("Pais (ISO-2)", key="f_country", max_chars=2)
+        st.text_input("Region contiene", key="f_region")
+        st.multiselect(
+            "Tipo de negocio",
+            options=list(bt_options.keys()),
+            key="f_business_types",
+            placeholder="Todos",
         )
-
-    with st.form("filters_form", clear_on_submit=False):
-        st.subheader("Busqueda rapida")
-        st.markdown(
-            "<div class='filters-hint'>Empieza por texto y ciudad. Luego ajusta precio o duracion.</div>",
-            unsafe_allow_html=True,
+        st.multiselect(
+            "Categoria de servicio",
+            options=list(cat_options.keys()),
+            key="f_categories",
+            placeholder="Todas",
         )
+        st.multiselect(
+            "Tipo de precio",
+            options=list(price_kind_map.keys()),
+            key="f_price_kinds",
+            placeholder="Todos",
+        )
+        st.selectbox("Orden", options=list(sort_map.keys()), key="f_sort_label")
+        st.selectbox("Resultados por pagina", options=PAGE_SIZE_OPTIONS, key="f_page_size")
 
-        c1, c2 = st.columns([2, 1])
-        with c1:
+        if st.button("Limpiar todos los filtros", use_container_width=True):
+            reset_filters()
+            st.rerun()
+
+    st.markdown(
+        """
+        <div class="hero-shell">
+          <div class="hero-kicker">NEUMOR DB · SERVICE DISCOVERY</div>
+          <h1 class="hero-title">Buscador inteligente de negocios y servicios</h1>
+          <div class="hero-sub">
+            Rebranding orientado a productividad: interfaz más limpia, flujo más guiado y resultados fáciles
+            de escanear. Todo el poder de filtros se mantiene, pero con una experiencia más intuitiva.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    with st.form("quick_filters", clear_on_submit=False):
+        st.markdown("<div class='panel-shell'>", unsafe_allow_html=True)
+        st.markdown("<div class='section-kicker'>Busqueda rapida</div>", unsafe_allow_html=True)
+        st.markdown("Empieza con texto + ciudad. Ajusta precio/duracion y pulsa buscar.")
+        q1, q2 = st.columns([2, 1])
+        with q1:
             st.text_input(
                 "Que quieres encontrar?",
                 key="f_search",
-                placeholder="Ej: maquillaje novia, corte hombre, semipermanente, lifting...",
+                placeholder="Ej: maquillaje novia, corte, lifting, cejas...",
             )
-        with c2:
-            st.text_input(
-                "Ciudad",
-                key="f_city",
-                placeholder="Ej: Sevilla",
-            )
+        with q2:
+            st.text_input("Ciudad", key="f_city", placeholder="Ej: Sevilla")
 
-        c3, c4 = st.columns(2)
-        with c3:
-            st.slider(
-                "Rango de precio (EUR)",
-                min_value=0,
-                max_value=500,
-                key="f_price_range",
-                step=5,
-            )
-        with c4:
-            st.slider(
-                "Rango de duracion (min)",
-                min_value=0,
-                max_value=360,
-                key="f_duration_range",
-                step=5,
-            )
+        q3, q4 = st.columns(2)
+        with q3:
+            st.slider("Rango de precio (EUR)", min_value=0, max_value=500, step=5, key="f_price_range")
+        with q4:
+            st.slider("Rango de duracion (min)", min_value=0, max_value=360, step=5, key="f_duration_range")
 
-        with st.expander("Filtros avanzados", expanded=False):
-            c5, c6 = st.columns(2)
-            with c5:
-                st.text_input("Pais (ISO-2)", key="f_country", max_chars=2)
-                st.text_input("Region contiene", key="f_region")
-                st.multiselect(
-                    "Tipo de negocio",
-                    options=list(bt_options.keys()),
-                    key="f_business_types",
-                    placeholder="Selecciona uno o varios tipos",
-                )
-            with c6:
-                st.multiselect(
-                    "Categoria de servicio",
-                    options=list(cat_options.keys()),
-                    key="f_categories",
-                    placeholder="Selecciona una o varias categorias",
-                )
-                st.multiselect(
-                    "Tipo de precio",
-                    options=list(price_kind_map.keys()),
-                    key="f_price_kinds",
-                    placeholder="Selecciona uno o varios tipos",
-                )
+        a1, a2 = st.columns([1, 1])
+        a1.form_submit_button("Buscar ahora", use_container_width=True, type="primary")
+        clear_quick = a2.form_submit_button("Limpiar búsqueda", use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-            c7, c8 = st.columns(2)
-            with c7:
-                st.selectbox(
-                    "Orden de resultados",
-                    options=list(sort_map.keys()),
-                    key="f_sort_label",
-                )
-            with c8:
-                st.selectbox(
-                    "Resultados por pagina",
-                    options=PAGE_SIZE_OPTIONS,
-                    key="f_page_size",
-                )
-
-        action_col1, action_col2 = st.columns([1, 1])
-        action_col1.form_submit_button("Buscar", use_container_width=True, type="primary")
-        clear_filters = action_col2.form_submit_button("Limpiar filtros", use_container_width=True)
-
-    if clear_filters:
+    if clear_quick:
         reset_filters()
         st.rerun()
 
@@ -622,6 +585,7 @@ def main() -> None:
         max_duration=st.session_state["f_duration_range"][1] if st.session_state["f_duration_range"][1] > 0 else None,
         sort_order=sort_map[st.session_state["f_sort_label"]],
     )
+
     page_size = int(st.session_state["f_page_size"])
     page = int(st.session_state["page"])
 
@@ -642,12 +606,12 @@ def main() -> None:
         st.session_state["page"] = total_pages
         page = total_pages
 
-    unique_businesses = len({(row.get("business_id") or row.get("business_name")) for row in rows})
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Resultados totales", f"{total}")
-    col2.metric("Pagina", f"{page}/{total_pages}")
-    col3.metric("Filas en pagina", f"{len(rows)}")
-    col4.metric("Negocios en pagina", f"{unique_businesses}")
+    unique_businesses = len({row.get("business_id") or row.get("business_name") for row in rows})
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Resultados", f"{total}")
+    m2.metric("Página", f"{page}/{total_pages}")
+    m3.metric("Filas visibles", f"{len(rows)}")
+    m4.metric("Negocios en página", f"{unique_businesses}")
 
     active = active_filters_summary(
         search=st.session_state["f_search"].strip(),
@@ -660,7 +624,24 @@ def main() -> None:
         price_range=tuple(st.session_state["f_price_range"]),
         duration_range=tuple(st.session_state["f_duration_range"]),
     )
-    render_active_badges(active)
+    render_active_chips(active)
+
+    if not rows:
+        st.markdown("<div class='panel-shell'><h3>Sin resultados para estos filtros</h3></div>", unsafe_allow_html=True)
+        c1, c2 = st.columns([1, 2])
+        if c1.button("Resetear filtros", type="primary", use_container_width=True):
+            reset_filters()
+            st.rerun()
+        c2.caption("Prueba quitando ciudad, ampliando precio/duracion o cambiando categoria.")
+        st.stop()
+
+    st.radio(
+        "Visualización",
+        VIEW_MODE_OPTIONS,
+        key="f_view_mode",
+        horizontal=True,
+        label_visibility="collapsed",
+    )
 
     display_rows: list[dict[str, Any]] = []
     for row in rows:
@@ -672,38 +653,28 @@ def main() -> None:
                 "Categoria": row.get("service_category_label") or row.get("service_category_code"),
                 "Ciudad": row.get("city"),
                 "Pais": row.get("country_code"),
-                "Precio": format_money(row.get("price_cents"), row.get("currency_code") or "EUR"),
+                "Precio": format_service_price(row),
                 "Duracion": f"{row.get('duration_minutes')} min" if row.get("duration_minutes") else "-",
+                "business_id": row.get("business_id"),
+                "service_id": row.get("service_id"),
             }
         )
 
-    if not display_rows:
-        st.info("No hay resultados con esos filtros. Prueba ampliar precio, duracion o quitar algun filtro.")
-    else:
-        view_col1, view_col2 = st.columns([1, 2])
-        with view_col1:
-            st.radio("Vista", ["Tabla", "Resumen + tabla"], key="f_view_mode", horizontal=True)
-        with view_col2:
-            st.caption("Tip: usa 'Resumen + tabla' para explorar rapido y luego bajar al detalle.")
+    if st.session_state["f_view_mode"] in {"Tarjetas", "Mixta"}:
+        render_service_cards(rows)
 
-        if st.session_state["f_view_mode"] == "Resumen + tabla":
-            summary_rows = build_business_summary(rows)
-            render_business_cards(summary_rows)
-            st.markdown("")
-
+    if st.session_state["f_view_mode"] in {"Tabla", "Mixta"}:
         st.dataframe(display_rows, use_container_width=True, hide_index=True)
 
-    nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
-    prev_disabled = page <= 1
-    next_disabled = page >= total_pages
-    if nav_col1.button("Anterior", disabled=prev_disabled, use_container_width=True):
+    nav1, nav2, nav3 = st.columns([1, 2, 1])
+    if nav1.button("Anterior", disabled=(page <= 1), use_container_width=True):
         st.session_state["page"] = max(1, page - 1)
         st.rerun()
-    nav_col2.markdown(
-        f"<div style='text-align:center;padding-top:0.35rem;'>Pagina <strong>{page}</strong> de <strong>{total_pages}</strong></div>",
+    nav2.markdown(
+        f"<div style='text-align:center;padding-top:.45rem;'>Página <strong>{page}</strong> de <strong>{total_pages}</strong></div>",
         unsafe_allow_html=True,
     )
-    if nav_col3.button("Siguiente", disabled=next_disabled, use_container_width=True):
+    if nav3.button("Siguiente", disabled=(page >= total_pages), use_container_width=True):
         st.session_state["page"] = min(total_pages, page + 1)
         st.rerun()
 
