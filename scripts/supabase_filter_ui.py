@@ -29,6 +29,12 @@ PRICE_KIND_OPTIONS: list[tuple[str, str]] = [
 ]
 VIEW_MODE_OPTIONS = ["Tarjetas", "Tabla"]
 CARD_SCOPE_OPTIONS = ["Negocios", "Servicios"]
+CLIENT_SORT_LABELS = {
+    "Precio: menor a mayor",
+    "Precio: mayor a menor",
+    "Duracion: corta a larga",
+    "Duracion: larga a corta",
+}
 
 DEFAULT_STATE: dict[str, Any] = {
     "f_search": "",
@@ -208,12 +214,15 @@ def init_state() -> None:
         st.session_state["f_sort_label"] = SORT_OPTIONS[0][0]
     if "last_filter_signature" not in st.session_state:
         st.session_state["last_filter_signature"] = None
+    if "last_view_signature" not in st.session_state:
+        st.session_state["last_view_signature"] = None
 
 
 def reset_filters() -> None:
     for key, value in DEFAULT_STATE.items():
         st.session_state[key] = value
     st.session_state["last_filter_signature"] = None
+    st.session_state["last_view_signature"] = None
     clear_selected_details()
 
 
@@ -337,6 +346,35 @@ def fetch_rows(
     return resp.json(), total
 
 
+def fetch_all_rows(
+    base_url: str,
+    api_key: str,
+    params: list[tuple[str, str]],
+    *,
+    chunk_size: int = 1000,
+) -> tuple[list[dict[str, Any]], int]:
+    all_rows: list[dict[str, Any]] = []
+    page = 1
+    total = 0
+    while True:
+        chunk_rows, total = fetch_rows(
+            base_url=base_url,
+            api_key=api_key,
+            params=params,
+            page=page,
+            page_size=chunk_size,
+        )
+        if not chunk_rows:
+            break
+        all_rows.extend(chunk_rows)
+        if len(all_rows) >= total:
+            break
+        if len(chunk_rows) < chunk_size:
+            break
+        page += 1
+    return all_rows, total
+
+
 def format_money(cents: int | None, currency: str = "EUR") -> str:
     if cents is None:
         return "-"
@@ -361,6 +399,62 @@ def format_service_price(row: dict[str, Any]) -> str:
     if isinstance(fixed, int):
         return format_money(fixed, currency)
     return "Consultar"
+
+
+def effective_price_cents(row: dict[str, Any]) -> int | None:
+    fixed = row.get("price_cents")
+    if isinstance(fixed, int):
+        return fixed
+    min_cents = row.get("price_min_cents")
+    if isinstance(min_cents, int):
+        return min_cents
+    max_cents = row.get("price_max_cents")
+    if isinstance(max_cents, int):
+        return max_cents
+    return None
+
+
+def sort_rows_client(rows: list[dict[str, Any]], sort_label: str) -> list[dict[str, Any]]:
+    def service_name(row: dict[str, Any]) -> str:
+        return str(row.get("service_name") or "").lower()
+
+    if sort_label == "Precio: menor a mayor":
+        return sorted(
+            rows,
+            key=lambda row: (
+                effective_price_cents(row) is None,
+                effective_price_cents(row) if effective_price_cents(row) is not None else 10**12,
+                service_name(row),
+            ),
+        )
+    if sort_label == "Precio: mayor a menor":
+        return sorted(
+            rows,
+            key=lambda row: (
+                effective_price_cents(row) is None,
+                -(effective_price_cents(row) if effective_price_cents(row) is not None else 0),
+                service_name(row),
+            ),
+        )
+    if sort_label == "Duracion: corta a larga":
+        return sorted(
+            rows,
+            key=lambda row: (
+                row.get("duration_minutes") is None,
+                row.get("duration_minutes") if row.get("duration_minutes") is not None else 10**6,
+                service_name(row),
+            ),
+        )
+    if sort_label == "Duracion: larga a corta":
+        return sorted(
+            rows,
+            key=lambda row: (
+                row.get("duration_minutes") is None,
+                -(row.get("duration_minutes") if row.get("duration_minutes") is not None else 0),
+                service_name(row),
+            ),
+        )
+    return rows
 
 
 def rows_to_csv(rows: list[dict[str, Any]]) -> str:
@@ -442,7 +536,7 @@ def build_business_cards(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         if category_label:
             bucket["categories"].add(str(category_label))
 
-        price = row.get("price_cents")
+        price = effective_price_cents(row)
         if isinstance(price, int):
             if bucket["min_price_cents"] is None or price < bucket["min_price_cents"]:
                 bucket["min_price_cents"] = price
@@ -759,20 +853,55 @@ def main() -> None:
         max_price=int(st.session_state["f_price_range"][1] * 100) if st.session_state["f_price_range"][1] > 0 else None,
         min_duration=st.session_state["f_duration_range"][0] if st.session_state["f_duration_range"][0] > 0 else None,
         max_duration=st.session_state["f_duration_range"][1] if st.session_state["f_duration_range"][1] > 0 else None,
-        sort_order=sort_map[st.session_state["f_sort_label"]],
+        sort_order=(
+            "business_name.asc,service_name.asc"
+            if st.session_state["f_sort_label"] in CLIENT_SORT_LABELS
+            else sort_map[st.session_state["f_sort_label"]]
+        ),
     )
 
     page_size = int(st.session_state["f_page_size"])
     page = int(st.session_state["page"])
+    initial_view_mode = str(st.session_state.get("f_view_mode", VIEW_MODE_OPTIONS[0]))
+    initial_card_scope = str(st.session_state.get("f_card_scope", CARD_SCOPE_OPTIONS[0]))
+    business_card_mode = initial_view_mode == "Tarjetas" and initial_card_scope == "Negocios"
+
+    business_cards_all: list[dict[str, Any]] = []
+    business_cards_page: list[dict[str, Any]] = []
+    total_services_filtered = 0
 
     try:
-        rows, total = fetch_rows(
-            base_url=supabase_url,
-            api_key=api_key,
-            params=params,
-            page=page,
-            page_size=page_size,
-        )
+        if business_card_mode:
+            all_rows, total_services_filtered = fetch_all_rows(
+                base_url=supabase_url,
+                api_key=api_key,
+                params=params,
+                chunk_size=1000,
+            )
+            if st.session_state["f_sort_label"] in CLIENT_SORT_LABELS:
+                all_rows = sort_rows_client(all_rows, st.session_state["f_sort_label"])
+            business_cards_all = build_business_cards(all_rows)
+            total = len(business_cards_all)
+            rows = []
+        elif st.session_state["f_sort_label"] in CLIENT_SORT_LABELS:
+            all_rows, total = fetch_all_rows(
+                base_url=supabase_url,
+                api_key=api_key,
+                params=params,
+                chunk_size=1000,
+            )
+            sorted_rows = sort_rows_client(all_rows, st.session_state["f_sort_label"])
+            start = max(0, (page - 1) * page_size)
+            end = start + page_size
+            rows = sorted_rows[start:end]
+        else:
+            rows, total = fetch_rows(
+                base_url=supabase_url,
+                api_key=api_key,
+                params=params,
+                page=page,
+                page_size=page_size,
+            )
     except requests.RequestException as exc:
         st.error(f"Error consultando v_service_search: {exc}")
         st.stop()
@@ -782,12 +911,22 @@ def main() -> None:
         st.session_state["page"] = total_pages
         page = total_pages
 
+    if business_card_mode:
+        start = max(0, (page - 1) * page_size)
+        end = start + page_size
+        business_cards_page = business_cards_all[start:end]
+        rows = [service for business in business_cards_page for service in business.get("services", [])]
+
     unique_businesses = len({row.get("business_id") or row.get("business_name") for row in rows})
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Resultados", f"{total}")
+    m1.metric("Negocios" if business_card_mode else "Resultados", f"{total}")
     m2.metric("Página", f"{page}/{total_pages}")
-    m3.metric("Filas visibles", f"{len(rows)}")
-    m4.metric("Negocios en página", f"{unique_businesses}")
+    if business_card_mode:
+        m3.metric("Negocios visibles", f"{len(business_cards_page)}")
+        m4.metric("Servicios filtrados", f"{total_services_filtered}")
+    else:
+        m3.metric("Filas visibles", f"{len(rows)}")
+        m4.metric("Negocios en página", f"{unique_businesses}")
 
     active = active_filters_summary(
         search=st.session_state["f_search"].strip(),
@@ -834,6 +973,7 @@ def main() -> None:
             }
         )
 
+    card_scope = st.session_state.get("f_card_scope", CARD_SCOPE_OPTIONS[0])
     if view_mode == "Tarjetas":
         card_scope = st.radio(
             "Mostrar tarjetas de",
@@ -842,18 +982,26 @@ def main() -> None:
             horizontal=True,
         )
         if card_scope == "Negocios":
-            render_business_cards(build_business_cards(rows))
+            if business_card_mode:
+                render_business_cards(business_cards_page)
+            else:
+                render_business_cards(build_business_cards(rows))
         else:
             render_service_cards(rows)
     else:
         st.dataframe(display_rows, use_container_width=True, hide_index=True)
 
+    view_signature = (view_mode, card_scope if view_mode == "Tarjetas" else "Tabla")
+    if view_signature != st.session_state.get("last_view_signature"):
+        st.session_state["last_view_signature"] = view_signature
+        clear_selected_details()
+
     selected_business_detail = st.session_state.get("selected_business_detail")
-    if isinstance(selected_business_detail, dict):
+    if isinstance(selected_business_detail, dict) and view_mode == "Tarjetas" and card_scope == "Negocios":
         show_business_detail_dialog(selected_business_detail)
 
     selected_service_detail = st.session_state.get("selected_service_detail")
-    if isinstance(selected_service_detail, dict):
+    if isinstance(selected_service_detail, dict) and view_mode == "Tarjetas" and card_scope == "Servicios":
         show_service_detail_dialog(selected_service_detail)
 
     nav1, nav2, nav3 = st.columns([1, 2, 1])
