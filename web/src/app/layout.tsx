@@ -53,9 +53,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                           <Button component={Link} href="/billing" size="small" variant="outlined">
                             Plan
                           </Button>
-                          <Button component={Link} href="/auth/logout" size="small">
-                            Salir
-                          </Button>
+                          <Box component="form" action="/auth/logout" method="post" sx={{ display: 'inline-flex' }}>
+                            <Button type="submit" size="small">
+                              Salir
+                            </Button>
+                          </Box>
                         </>
                       ) : (
                         <Button component={Link} href="/login" size="small" variant="contained">
