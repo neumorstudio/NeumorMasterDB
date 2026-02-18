@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </Toolbar>
               </Container>
             </AppBar>
-            <Container component="main" maxWidth="xl" sx={{ py: 4 }}>
+            <Container component="main" maxWidth="xl" sx={{ py: { xs: 2, sm: 3, md: 4 }, px: { xs: 1.5, sm: 3 } }}>
               <Box>{children}</Box>
             </Container>
           </Providers>

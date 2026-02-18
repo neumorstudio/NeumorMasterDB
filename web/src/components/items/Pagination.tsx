@@ -1,10 +1,12 @@
 'use client';
 
-import { CircularProgress, Pagination as MuiPagination, Stack, Typography } from '@mui/material';
+import { CircularProgress, Pagination as MuiPagination, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
 
 export function Pagination({ page, totalPages }: { page: number; totalPages: number }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -19,6 +21,9 @@ export function Pagination({ page, totalPages }: { page: number; totalPages: num
         page={page}
         count={totalPages}
         color="primary"
+        size={isMobile ? 'small' : 'medium'}
+        siblingCount={isMobile ? 0 : 1}
+        boundaryCount={isMobile ? 1 : 2}
         disabled={isPending}
         onChange={(_, value) => {
           const next = new URLSearchParams(searchParams.toString());

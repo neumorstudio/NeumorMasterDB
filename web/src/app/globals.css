@@ -35,3 +35,14 @@ a {
   box-shadow: 0 16px 36px rgba(17, 34, 56, 0.1);
   border-color: rgba(115, 145, 174, 0.4);
 }
+
+@media (max-width: 600px) {
+  .glass-panel {
+    backdrop-filter: blur(6px);
+  }
+
+  .glass-card:hover {
+    transform: none;
+    box-shadow: 0 10px 24px rgba(17, 34, 56, 0.08);
+  }
+}

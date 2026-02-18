@@ -22,7 +22,7 @@ export default async function ItemsPage({ searchParams }: Props) {
   return (
     <Stack spacing={2}>
       <Stack spacing={0.5}>
-        <Typography variant="h3" component="h1" fontWeight={700}>
+        <Typography variant="h3" component="h1" fontWeight={700} sx={{ fontSize: { xs: '2rem', md: '3rem' } }}>
           Directorio de Servicios
         </Typography>
         <Typography color="text.secondary">

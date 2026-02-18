@@ -14,12 +14,15 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
   TableSortLabel,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
@@ -53,6 +56,8 @@ type BusinessDetailResponse = {
 type BusinessSortField = 'service_id' | 'service_name' | 'price' | 'duration';
 
 export function ResultsView({ filters, services, businesses }: Props) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [businessModalOpen, setBusinessModalOpen] = useState(false);
   const [isLoadingBusiness, setIsLoadingBusiness] = useState(false);
   const [businessDetail, setBusinessDetail] = useState<BusinessDetailResponse | null>(null);
@@ -110,36 +115,38 @@ export function ResultsView({ filters, services, businesses }: Props) {
     return (
       <Card sx={{ mt: 2 }} className="glass-panel">
         <CardContent>
-          <Table size="small" aria-label="tabla resultados">
-            <TableHead>
-              <TableRow>
-                <TableCell>Negocio</TableCell>
-                <TableCell>Servicio</TableCell>
-                <TableCell>Ciudad</TableCell>
-                <TableCell>Precio</TableCell>
-                <TableCell>Detalle</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {services.map((item, idx) => (
-                <TableRow key={`${item.service_id ?? 'service'}-${idx}`}>
-                  <TableCell>{item.business_name ?? '-'}</TableCell>
-                  <TableCell>{item.service_name ?? '-'}</TableCell>
-                  <TableCell>{item.city ?? '-'}</TableCell>
-                  <TableCell>{formatServicePrice(item)}</TableCell>
-                  <TableCell>
-                    {item.service_id ? (
-                      <Button component={Link} href={`/items/${item.service_id}`} size="small">
-                        Ver
-                      </Button>
-                    ) : (
-                      '-'
-                    )}
-                  </TableCell>
+          <TableContainer sx={{ overflowX: 'auto' }}>
+            <Table size="small" aria-label="tabla resultados" sx={{ minWidth: 680 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Negocio</TableCell>
+                  <TableCell>Servicio</TableCell>
+                  <TableCell>Ciudad</TableCell>
+                  <TableCell>Precio</TableCell>
+                  <TableCell>Detalle</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {services.map((item, idx) => (
+                  <TableRow key={`${item.service_id ?? 'service'}-${idx}`}>
+                    <TableCell>{item.business_name ?? '-'}</TableCell>
+                    <TableCell>{item.service_name ?? '-'}</TableCell>
+                    <TableCell>{item.city ?? '-'}</TableCell>
+                    <TableCell>{formatServicePrice(item)}</TableCell>
+                    <TableCell>
+                      {item.service_id ? (
+                        <Button component={Link} href={`/items/${item.service_id}`} size="small">
+                          Ver
+                        </Button>
+                      ) : (
+                        '-'
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </CardContent>
       </Card>
     );
@@ -152,9 +159,9 @@ export function ResultsView({ filters, services, businesses }: Props) {
           {businesses.map((item, idx) => (
             <Card key={`${item.business_id ?? 'biz'}-${idx}`} className="glass-card">
               <CardActionArea onClick={() => void openBusinessDetail(item.business_id)}>
-                <CardContent>
+                <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
                   <Stack spacing={1}>
-                    <Typography variant="h6">{item.business_name}</Typography>
+                    <Typography variant={isMobile ? 'subtitle1' : 'h6'}>{item.business_name}</Typography>
                     <Typography color="text.secondary">{item.business_type_label}</Typography>
                     <Typography variant="body2" color="text.secondary">Telefono: {item.business_phone ?? '-'}</Typography>
                     <Typography>
@@ -179,6 +186,7 @@ export function ResultsView({ filters, services, businesses }: Props) {
           onClose={() => setBusinessModalOpen(false)}
           maxWidth="lg"
           fullWidth
+          fullScreen={isMobile}
           PaperProps={{ className: 'glass-panel' }}
         >
           <DialogTitle>{businessDetail?.business.business_name ?? 'Detalle de negocio'}</DialogTitle>
@@ -241,58 +249,60 @@ export function ResultsView({ filters, services, businesses }: Props) {
                 <Divider />
 
                 <Typography variant="h6">Servicios del negocio</Typography>
-                <Table size="small" aria-label="servicios del negocio">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>
-                        <TableSortLabel
-                          active={businessSortField === 'service_id'}
-                          direction={businessSortField === 'service_id' ? businessSortDirection : 'asc'}
-                          onClick={() => onSortBusinessTable('service_id')}
-                        >
-                          Service ID
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell>
-                        <TableSortLabel
-                          active={businessSortField === 'service_name'}
-                          direction={businessSortField === 'service_name' ? businessSortDirection : 'asc'}
-                          onClick={() => onSortBusinessTable('service_name')}
-                        >
-                          Servicio
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell>
-                        <TableSortLabel
-                          active={businessSortField === 'price'}
-                          direction={businessSortField === 'price' ? businessSortDirection : 'asc'}
-                          onClick={() => onSortBusinessTable('price')}
-                        >
-                          Precio
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell>
-                        <TableSortLabel
-                          active={businessSortField === 'duration'}
-                          direction={businessSortField === 'duration' ? businessSortDirection : 'asc'}
-                          onClick={() => onSortBusinessTable('duration')}
-                        >
-                          Duracion
-                        </TableSortLabel>
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {sortedServiceRows.map((service, index) => (
-                      <TableRow key={`${service.service_id ?? 'service'}-${index}`}>
-                        <TableCell>{service.service_id ?? '-'}</TableCell>
-                        <TableCell>{service.service_name ?? '-'}</TableCell>
-                        <TableCell>{formatServicePrice(service)}</TableCell>
-                        <TableCell>{service.duration_minutes !== null ? `${service.duration_minutes} min` : '-'}</TableCell>
+                <TableContainer sx={{ overflowX: 'auto' }}>
+                  <Table size="small" aria-label="servicios del negocio" sx={{ minWidth: 640 }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>
+                          <TableSortLabel
+                            active={businessSortField === 'service_id'}
+                            direction={businessSortField === 'service_id' ? businessSortDirection : 'asc'}
+                            onClick={() => onSortBusinessTable('service_id')}
+                          >
+                            Service ID
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell>
+                          <TableSortLabel
+                            active={businessSortField === 'service_name'}
+                            direction={businessSortField === 'service_name' ? businessSortDirection : 'asc'}
+                            onClick={() => onSortBusinessTable('service_name')}
+                          >
+                            Servicio
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell>
+                          <TableSortLabel
+                            active={businessSortField === 'price'}
+                            direction={businessSortField === 'price' ? businessSortDirection : 'asc'}
+                            onClick={() => onSortBusinessTable('price')}
+                          >
+                            Precio
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell>
+                          <TableSortLabel
+                            active={businessSortField === 'duration'}
+                            direction={businessSortField === 'duration' ? businessSortDirection : 'asc'}
+                            onClick={() => onSortBusinessTable('duration')}
+                          >
+                            Duracion
+                          </TableSortLabel>
+                        </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHead>
+                    <TableBody>
+                      {sortedServiceRows.map((service, index) => (
+                        <TableRow key={`${service.service_id ?? 'service'}-${index}`}>
+                          <TableCell>{service.service_id ?? '-'}</TableCell>
+                          <TableCell>{service.service_name ?? '-'}</TableCell>
+                          <TableCell>{formatServicePrice(service)}</TableCell>
+                          <TableCell>{service.duration_minutes !== null ? `${service.duration_minutes} min` : '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               </Stack>
             ) : null}
           </DialogContent>
@@ -305,9 +315,9 @@ export function ResultsView({ filters, services, businesses }: Props) {
     <Stack spacing={2} mt={2}>
       {services.map((item, idx) => (
         <Card key={`${item.service_id ?? 'service'}-${idx}`} className="glass-card">
-          <CardContent>
+          <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
             <Stack spacing={1}>
-              <Typography variant="h6">{item.service_name ?? 'Servicio sin nombre'}</Typography>
+              <Typography variant={isMobile ? 'subtitle1' : 'h6'}>{item.service_name ?? 'Servicio sin nombre'}</Typography>
               <Typography color="text.secondary">{item.business_name ?? 'Negocio sin nombre'}</Typography>
               <Typography variant="body2" color="text.secondary">Telefono: {item.business_phone ?? '-'}</Typography>
               <Typography>{formatServicePrice(item)}</Typography>

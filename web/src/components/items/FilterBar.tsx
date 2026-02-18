@@ -21,16 +21,16 @@ import {
   Stack,
   Switch,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  CARD_SCOPE_OPTIONS,
   PAGE_SIZE_OPTIONS,
   PRICE_KIND_OPTIONS,
   SORT_OPTIONS,
-  VIEW_OPTIONS,
 } from '@/lib/filters/constants';
 import { filtersToSearchParams } from '@/lib/filters/schema';
 import type { Filters, ReferenceOption } from '@/types/items';
@@ -70,12 +70,66 @@ export function FilterBar({ filters, businessTypes }: Props) {
 
   const hasChanges = useMemo(() => JSON.stringify(form) !== JSON.stringify(filters), [form, filters]);
 
+  const applyQuickView = (nextView: Filters['view']) => {
+    const next: Filters = {
+      ...form,
+      view: nextView,
+      scope: nextView === 'table' ? 'services' : form.scope,
+      page: 1,
+    };
+    setForm(next);
+    pushFilters(next);
+  };
+
+  const applyQuickScope = (nextScope: Filters['scope']) => {
+    const next: Filters = { ...form, scope: nextScope, view: 'cards', page: 1 };
+    setForm(next);
+    pushFilters(next);
+  };
+
   return (
     <>
       <Card className="glass-panel">
-        <CardContent>
-          <Stack spacing={2}>
-            <Grid container spacing={2}>
+        <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+          <Stack spacing={{ xs: 1.5, sm: 2 }}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1}
+              alignItems={{ xs: 'stretch', sm: 'center' }}
+              justifyContent="space-between"
+            >
+              <ToggleButtonGroup
+                value={form.view}
+                exclusive
+                size="small"
+                color="primary"
+                onChange={(_, value: Filters['view'] | null) => {
+                  if (!value || value === form.view || isNavigating) return;
+                  applyQuickView(value);
+                }}
+              >
+                <ToggleButton value="cards">Tarjetas</ToggleButton>
+                <ToggleButton value="table">Tabla</ToggleButton>
+              </ToggleButtonGroup>
+
+              {form.view === 'cards' ? (
+                <ToggleButtonGroup
+                  value={form.scope}
+                  exclusive
+                  size="small"
+                  color="primary"
+                  onChange={(_, value: Filters['scope'] | null) => {
+                    if (!value || value === form.scope || isNavigating) return;
+                    applyQuickScope(value);
+                  }}
+                >
+                  <ToggleButton value="businesses">Negocios</ToggleButton>
+                  <ToggleButton value="services">Servicios</ToggleButton>
+                </ToggleButtonGroup>
+              ) : null}
+            </Stack>
+
+            <Grid container spacing={{ xs: 1.5, sm: 2 }}>
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   label="Buscar"
@@ -141,7 +195,7 @@ export function FilterBar({ filters, businessTypes }: Props) {
               </Grid>
             </Grid>
 
-            <Grid container spacing={2}>
+            <Grid container spacing={{ xs: 1.5, sm: 2 }}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl fullWidth>
                   <InputLabel id="business-types-label">Tipo de negocio</InputLabel>
@@ -202,7 +256,7 @@ export function FilterBar({ filters, businessTypes }: Props) {
                 borderRadius: 2,
               }}
             >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: { xs: 1, sm: 2 } }}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -215,9 +269,9 @@ export function FilterBar({ filters, businessTypes }: Props) {
                   label="Modo avanzado"
                 />
               </AccordionSummary>
-              <AccordionDetails>
+              <AccordionDetails sx={{ px: { xs: 1, sm: 2 }, pb: { xs: 1.5, sm: 2 } }}>
                 {form.advancedMode ? (
-                  <Grid container spacing={2}>
+                  <Grid container spacing={{ xs: 1.5, sm: 2 }}>
                     <Grid size={{ xs: 12, md: 3 }}>
                       <TextField
                         label="Service ID"
@@ -315,44 +369,6 @@ export function FilterBar({ filters, businessTypes }: Props) {
                     </Grid>
 
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <FormControl fullWidth>
-                        <InputLabel id="view-label">Vista</InputLabel>
-                        <Select
-                          labelId="view-label"
-                          label="Vista"
-                          value={form.view}
-                          onChange={(e) =>
-                            setForm((prev) => ({ ...prev, view: e.target.value as Filters['view'], page: 1 }))
-                          }
-                        >
-                          {VIEW_OPTIONS.map((option) => (
-                            <MenuItem key={option.key} value={option.key}>
-                              {option.label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 3 }}>
-                      <FormControl fullWidth>
-                        <InputLabel id="scope-label">Alcance tarjetas</InputLabel>
-                        <Select
-                          labelId="scope-label"
-                          label="Alcance tarjetas"
-                          value={form.scope}
-                          onChange={(e) =>
-                            setForm((prev) => ({ ...prev, scope: e.target.value as Filters['scope'], page: 1 }))
-                          }
-                        >
-                          {CARD_SCOPE_OPTIONS.map((option) => (
-                            <MenuItem key={option.key} value={option.key}>
-                              {option.label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 3 }}>
                       <TextField
                         label="Duracion min"
                         type="number"
@@ -385,17 +401,19 @@ export function FilterBar({ filters, businessTypes }: Props) {
                   </Grid>
                 ) : (
                   <Typography variant="body2" color="text.secondary">
-                    Activa el modo avanzado para filtrar por IDs, nombres exactos, moneda, tipo de precio, duracion y vista.
+                    Activa el modo avanzado para filtrar por IDs, nombres exactos, moneda, tipo de precio y duracion.
                   </Typography>
                 )}
               </AccordionDetails>
             </Accordion>
 
-            <Box display="flex" gap={1} flexWrap="wrap">
+            <Box display="flex" gap={1} flexWrap="wrap" flexDirection={{ xs: 'column', sm: 'row' }}>
               <Button
                 variant="contained"
                 onClick={() => pushFilters({ ...form, page: 1 })}
                 disabled={isNavigating || (!hasChanges && currentParams.toString().length > 0)}
+                fullWidth={false}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Aplicar filtros
               </Button>
@@ -403,12 +421,14 @@ export function FilterBar({ filters, businessTypes }: Props) {
                 variant="text"
                 disabled={isNavigating}
                 onClick={() => pushFilters({ ...form, showAll: true, page: 1 })}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Mostrar todo
               </Button>
               <Button
                 variant="outlined"
                 disabled={isNavigating}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={() => {
                   const defaults = {
                     ...filters,
