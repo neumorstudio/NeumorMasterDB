@@ -1,4 +1,5 @@
-import { Alert, Card, CardContent, Stack, Typography } from '@mui/material';
+import { Alert, Button, Card, CardContent, Stack, Typography } from '@mui/material';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PlansClient } from '@/components/billing/PlansClient';
 import { getServerUser } from '@/lib/auth/server';
@@ -21,6 +22,9 @@ export default async function BillingPage({ searchParams }: Props) {
 
   return (
     <Stack spacing={2}>
+      <Button component={Link} href="/items" variant="outlined" sx={{ width: 'fit-content' }}>
+        Volver al directorio
+      </Button>
       <Typography variant="h3">Suscripcion y creditos</Typography>
       {success ? <Alert severity="success">Pago completado. En breve veras tu plan actualizado.</Alert> : null}
       {canceled ? <Alert severity="info">Proceso de pago cancelado.</Alert> : null}

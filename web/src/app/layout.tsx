@@ -37,7 +37,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Container maxWidth="xl">
                 <Toolbar disableGutters sx={{ py: 1 }}>
                   <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
-                    <Typography variant="h6" fontWeight={700}>
+                    <Typography component={Link} href="/items" variant="h6" fontWeight={700} sx={{ textDecoration: 'none' }}>
                       Neumor Directory
                     </Typography>
                     <Stack direction="row" spacing={1} alignItems="center">

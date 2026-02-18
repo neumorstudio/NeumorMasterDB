@@ -1,10 +1,12 @@
 import { createServerClient } from '@supabase/ssr';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getPublicSupabaseEnv } from '@/lib/env';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
+  const tokenHash = url.searchParams.get('token_hash');
+  const otpType = url.searchParams.get('type');
   const next = url.searchParams.get('next') || '/items';
   const redirectResponse = NextResponse.redirect(new URL(next, url.origin));
 
@@ -12,15 +14,7 @@ export async function GET(request: Request) {
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
-        const cookieHeader = request.headers.get('cookie') || '';
-        return cookieHeader
-          .split(';')
-          .map((item) => item.trim())
-          .filter(Boolean)
-          .map((item) => {
-            const [name, ...rest] = item.split('=');
-            return { name, value: rest.join('=') };
-          });
+        return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
@@ -32,6 +26,11 @@ export async function GET(request: Request) {
 
   if (code) {
     await supabase.auth.exchangeCodeForSession(code);
+  } else if (tokenHash && otpType) {
+    await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: otpType as 'magiclink' | 'recovery' | 'invite' | 'email' | 'email_change',
+    });
   }
 
   return redirectResponse;
