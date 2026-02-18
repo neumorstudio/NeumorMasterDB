@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { Cormorant_Garamond, Manrope } from 'next/font/google';
-import { AppBar, Box, Container, Toolbar, Typography } from '@mui/material';
+import { AppBar, Box, Button, Container, Stack, Toolbar, Typography } from '@mui/material';
+import Link from 'next/link';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
+import { getServerUser } from '@/lib/auth/server';
 import { Providers } from './providers';
 import './globals.css';
 
@@ -24,7 +26,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const user = await getServerUser();
   return (
     <html lang="es">
       <body className={`${fontSans.variable} ${fontDisplay.variable}`}>
@@ -33,9 +36,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: '1px solid #d7e0ea' }}>
               <Container maxWidth="xl">
                 <Toolbar disableGutters sx={{ py: 1 }}>
-                  <Typography variant="h6" fontWeight={700}>
-                    Neumor Directory
-                  </Typography>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
+                    <Typography variant="h6" fontWeight={700}>
+                      Neumor Directory
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      {user ? (
+                        <>
+                          <Button component={Link} href="/billing" size="small" variant="outlined">
+                            Plan
+                          </Button>
+                          <Button component={Link} href="/auth/logout" size="small">
+                            Salir
+                          </Button>
+                        </>
+                      ) : (
+                        <Button component={Link} href="/login" size="small" variant="contained">
+                          Entrar
+                        </Button>
+                      )}
+                    </Stack>
+                  </Stack>
                 </Toolbar>
               </Container>
             </AppBar>
