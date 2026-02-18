@@ -16,6 +16,9 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function ItemsPage({ searchParams }: Props) {
   const user = await getServerUser();
   const params = await searchParams;

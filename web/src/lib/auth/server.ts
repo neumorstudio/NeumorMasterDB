@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr';
+import { unstable_noStore as noStore } from 'next/cache';
 import { cookies } from 'next/headers';
 import { getServerAuthEnv } from '@/lib/env';
 
@@ -25,13 +26,13 @@ export async function createSupabaseServerClient() {
 }
 
 export async function getServerUser() {
+  noStore();
   const supabase = await createSupabaseServerClient();
   const { data: sessionData } = await supabase.auth.getSession();
-  if (sessionData.session?.user) {
-    return sessionData.session.user;
-  }
-
   const { data, error } = await supabase.auth.getUser();
-  if (error) return null;
+  if (error) {
+    // Fallback only when Auth server validation fails transiently.
+    return sessionData.session?.user ?? null;
+  }
   return data.user;
 }
