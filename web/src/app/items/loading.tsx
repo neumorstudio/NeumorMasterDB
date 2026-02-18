@@ -3,7 +3,7 @@ import { Card, CardContent, CircularProgress, Skeleton, Stack, Typography } from
 export default function LoadingItems() {
   return (
     <Stack spacing={2}>
-      <Card>
+      <Card className="glass-panel">
         <CardContent>
           <Stack direction="row" spacing={2} alignItems="center">
             <CircularProgress size={24} />

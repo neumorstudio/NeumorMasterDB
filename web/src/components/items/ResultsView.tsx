@@ -108,7 +108,7 @@ export function ResultsView({ filters, services, businesses }: Props) {
 
   if (filters.view === 'table') {
     return (
-      <Card sx={{ mt: 2 }}>
+      <Card sx={{ mt: 2 }} className="glass-panel">
         <CardContent>
           <Table size="small" aria-label="tabla resultados">
             <TableHead>
@@ -150,7 +150,7 @@ export function ResultsView({ filters, services, businesses }: Props) {
       <>
         <Stack spacing={2} mt={2}>
           {businesses.map((item, idx) => (
-            <Card key={`${item.business_id ?? 'biz'}-${idx}`}>
+            <Card key={`${item.business_id ?? 'biz'}-${idx}`} className="glass-card">
               <CardActionArea onClick={() => void openBusinessDetail(item.business_id)}>
                 <CardContent>
                   <Stack spacing={1}>
@@ -174,7 +174,13 @@ export function ResultsView({ filters, services, businesses }: Props) {
           ))}
         </Stack>
 
-        <Dialog open={businessModalOpen} onClose={() => setBusinessModalOpen(false)} maxWidth="lg" fullWidth>
+        <Dialog
+          open={businessModalOpen}
+          onClose={() => setBusinessModalOpen(false)}
+          maxWidth="lg"
+          fullWidth
+          PaperProps={{ className: 'glass-panel' }}
+        >
           <DialogTitle>{businessDetail?.business.business_name ?? 'Detalle de negocio'}</DialogTitle>
           <DialogContent>
             {isLoadingBusiness ? (
@@ -298,7 +304,7 @@ export function ResultsView({ filters, services, businesses }: Props) {
   return (
     <Stack spacing={2} mt={2}>
       {services.map((item, idx) => (
-        <Card key={`${item.service_id ?? 'service'}-${idx}`}>
+        <Card key={`${item.service_id ?? 'service'}-${idx}`} className="glass-card">
           <CardContent>
             <Stack spacing={1}>
               <Typography variant="h6">{item.service_name ?? 'Servicio sin nombre'}</Typography>

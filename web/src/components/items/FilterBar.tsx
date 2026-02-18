@@ -72,7 +72,7 @@ export function FilterBar({ filters, businessTypes }: Props) {
 
   return (
     <>
-      <Card>
+      <Card className="glass-panel">
         <CardContent>
           <Stack spacing={2}>
             <Grid container spacing={2}>
@@ -122,10 +122,10 @@ export function FilterBar({ filters, businessTypes }: Props) {
               </Grid>
               <Grid size={{ xs: 12, md: 2 }}>
                 <FormControl fullWidth>
-                  <InputLabel id="pagesize-label">Pagina</InputLabel>
+                  <InputLabel id="pagesize-label">Tamano pagina</InputLabel>
                   <Select
                     labelId="pagesize-label"
-                    label="Pagina"
+                    label="Tamano pagina"
                     value={String(form.pageSize)}
                     onChange={(e) =>
                       setForm((prev) => ({ ...prev, pageSize: Number(e.target.value), page: 1 }))
@@ -194,7 +194,14 @@ export function FilterBar({ filters, businessTypes }: Props) {
               </Grid>
             </Grid>
 
-            <Accordion disableGutters>
+            <Accordion
+              disableGutters
+              sx={{
+                backgroundColor: 'transparent',
+                border: '1px solid rgba(171, 189, 205, 0.35)',
+                borderRadius: 2,
+              }}
+            >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <FormControlLabel
                   control={
@@ -328,10 +335,10 @@ export function FilterBar({ filters, businessTypes }: Props) {
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
                       <FormControl fullWidth>
-                        <InputLabel id="scope-label">Scope tarjetas</InputLabel>
+                        <InputLabel id="scope-label">Alcance tarjetas</InputLabel>
                         <Select
                           labelId="scope-label"
-                          label="Scope tarjetas"
+                          label="Alcance tarjetas"
                           value={form.scope}
                           onChange={(e) =>
                             setForm((prev) => ({ ...prev, scope: e.target.value as Filters['scope'], page: 1 }))

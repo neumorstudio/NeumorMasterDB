@@ -4,7 +4,7 @@ import type { ServiceItem } from '@/types/items';
 
 export function ItemDetail({ item }: { item: ServiceItem }) {
   return (
-    <Card>
+    <Card className="glass-panel">
       <CardContent>
         <Typography variant="h4" component="h1" mb={1}>
           {item.service_name ?? 'Servicio sin nombre'}

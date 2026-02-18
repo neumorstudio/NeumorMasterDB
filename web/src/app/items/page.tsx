@@ -21,9 +21,14 @@ export default async function ItemsPage({ searchParams }: Props) {
 
   return (
     <Stack spacing={2}>
-      <Typography variant="h4" component="h1" fontWeight={700}>
-        Items
-      </Typography>
+      <Stack spacing={0.5}>
+        <Typography variant="h3" component="h1" fontWeight={700}>
+          Directorio de Servicios
+        </Typography>
+        <Typography color="text.secondary">
+          Explora negocios y servicios con filtros avanzados.
+        </Typography>
+      </Stack>
 
       <FilterBar
         filters={filters}
@@ -39,7 +44,7 @@ export default async function ItemsPage({ searchParams }: Props) {
         />
       ) : (
         <>
-          <Alert severity="info">
+          <Alert severity="info" className="glass-panel">
             Total: {result?.total ?? 0} | Pagina: {result?.page ?? 1}/{result?.totalPages ?? 1}
           </Alert>
 
