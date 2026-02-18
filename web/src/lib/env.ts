@@ -36,3 +36,17 @@ export function getPublicSupabaseEnv() {
 
   return { supabaseUrl, supabaseAnonKey };
 }
+
+export function getServerAuthEnv() {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+  if (!supabaseUrl) {
+    throw new Error('Missing SUPABASE_URL for server auth');
+  }
+  if (!supabaseAnonKey) {
+    throw new Error('Missing SUPABASE_ANON_KEY for server auth');
+  }
+
+  return { supabaseUrl, supabaseAnonKey };
+}
