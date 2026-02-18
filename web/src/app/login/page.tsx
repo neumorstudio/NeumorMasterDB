@@ -1,10 +1,12 @@
 'use client';
 
 import { Alert, Box, Button, Card, CardContent, Stack, TextField, Typography } from '@mui/material';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { getSupabaseBrowserClient } from '@/lib/auth/client';
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +20,10 @@ export default function LoginPage() {
 
     try {
       const supabase = getSupabaseBrowserClient();
-      const redirectTo = `${window.location.origin}/auth/callback`;
+      const next = searchParams.get('next') || '/items';
+      const canonicalAppUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+      const origin = canonicalAppUrl || window.location.origin;
+      const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
       const { error: signInError } = await supabase.auth.signInWithOtp({
         email,
         options: { emailRedirectTo: redirectTo },

@@ -7,6 +7,17 @@ import { logServerError, logServerInfo } from '@/lib/utils/logger';
 const shouldDebugAuth = process.env.AUTH_DEBUG === '1';
 
 export async function middleware(request: NextRequest) {
+  const canonicalAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (process.env.NODE_ENV === 'production' && canonicalAppUrl) {
+    const canonicalUrl = new URL(canonicalAppUrl);
+    const isDifferentHost = request.nextUrl.host !== canonicalUrl.host;
+    const isVercelPreviewHost = request.nextUrl.hostname.endsWith('.vercel.app');
+    if (isDifferentHost && isVercelPreviewHost) {
+      const redirectUrl = new URL(request.nextUrl.pathname + request.nextUrl.search, canonicalUrl);
+      return NextResponse.redirect(redirectUrl, 307);
+    }
+  }
+
   let response = NextResponse.next({ request });
   let supabaseUrl = '';
   let supabaseAnonKey = '';
