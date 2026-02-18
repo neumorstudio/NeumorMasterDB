@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { FilterBar } from '@/components/items/FilterBar';
 import { Pagination } from '@/components/items/Pagination';
 import { getServerUser } from '@/lib/auth/server';
+import { calculateSearchCreditCost } from '@/lib/credits/cost';
 import { buildQueryFingerprint, consumeUserSearchCredit, getUserCreditStatus, type UserCreditStatus } from '@/lib/credits/user';
 import { ResultsView } from '@/components/items/ResultsView';
 import { StatusState } from '@/components/common/StatusState';
@@ -22,6 +23,7 @@ export default async function ItemsPage({ searchParams }: Props) {
 
   const shouldFetch = hasActiveFilters(filters) || filters.showAll;
   const shouldCharge = shouldFetch && filters.page === 1;
+  const searchCreditCost = calculateSearchCreditCost(filters);
 
   if (!user) {
     return (
@@ -54,6 +56,7 @@ export default async function ItemsPage({ searchParams }: Props) {
       const fingerprint = buildQueryFingerprint(JSON.stringify({ ...filters, page: 1 }));
       creditStatus = await consumeUserSearchCredit({
         userId: user.id,
+        cost: searchCreditCost,
         endpoint: 'items_page',
         queryFingerprint: fingerprint,
       });

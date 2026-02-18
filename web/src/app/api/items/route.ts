@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerUser } from '@/lib/auth/server';
+import { calculateSearchCreditCost } from '@/lib/credits/cost';
 import { buildQueryFingerprint, consumeUserSearchCredit, getUserCreditStatus } from '@/lib/credits/user';
 import { listItems } from '@/lib/data/items';
 import { parseFilters } from '@/lib/filters/schema';
@@ -16,11 +17,13 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const filters = parseFilters(Object.fromEntries(url.searchParams.entries()));
     const shouldCharge = (hasActiveFilters(filters) || filters.showAll) && filters.page === 1;
+    const searchCreditCost = calculateSearchCreditCost(filters);
     let credits = await getUserCreditStatus(user.id);
 
     if (shouldCharge) {
       credits = await consumeUserSearchCredit({
         userId: user.id,
+        cost: searchCreditCost,
         endpoint: 'items_api',
         queryFingerprint: buildQueryFingerprint(JSON.stringify({ ...filters, page: 1 })),
       });

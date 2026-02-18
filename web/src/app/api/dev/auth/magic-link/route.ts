@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       action_link: actionLink,
       local_action_link: localActionLink,
       token_hash: tokenHash,
-      note: 'Dev-only endpoint. Open action_link in browser to sign in.',
+      note: 'Dev-only endpoint. In local development open local_action_link in browser to sign in.',
     });
   } catch (error) {
     logServerError('api.dev.auth.magic_link.error', error);

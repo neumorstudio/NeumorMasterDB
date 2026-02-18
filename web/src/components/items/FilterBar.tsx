@@ -6,6 +6,8 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Alert,
+  Chip,
   Backdrop,
   Box,
   Button,
@@ -27,6 +29,7 @@ import {
 } from '@mui/material';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { calculateSearchCreditCost, countActiveAdvancedFilters } from '@/lib/credits/cost';
 import {
   PAGE_SIZE_OPTIONS,
   PRICE_KIND_OPTIONS,
@@ -69,6 +72,9 @@ export function FilterBar({ filters, businessTypes }: Props) {
   }, [form.q]);
 
   const hasChanges = useMemo(() => JSON.stringify(form) !== JSON.stringify(filters), [form, filters]);
+  const activeAdvancedFilters = useMemo(() => countActiveAdvancedFilters(form), [form]);
+  const dynamicSearchCost = useMemo(() => calculateSearchCreditCost(form), [form]);
+  const formatCredits = (value: number) => `${value} ${value === 1 ? 'credito' : 'creditos'}`;
 
   const applyQuickView = (nextView: Filters['view']) => {
     const next: Filters = {
@@ -272,6 +278,18 @@ export function FilterBar({ filters, businessTypes }: Props) {
               <AccordionDetails sx={{ px: { xs: 1, sm: 2 }, pb: { xs: 1.5, sm: 2 } }}>
                 {form.advancedMode ? (
                   <Grid container spacing={{ xs: 1.5, sm: 2 }}>
+                    <Grid size={{ xs: 12 }}>
+                      <Alert
+                        severity="info"
+                        sx={{
+                          border: '1px solid rgba(125, 162, 194, 0.35)',
+                          backgroundColor: 'rgba(227, 241, 252, 0.46)',
+                        }}
+                      >
+                        Esta busqueda costara <strong>{formatCredits(dynamicSearchCost)}</strong>: 1 base +{' '}
+                        <strong>{formatCredits(activeAdvancedFilters)}</strong> por filtros avanzados activos.
+                      </Alert>
+                    </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
                       <TextField
                         label="Service ID"
@@ -402,12 +420,19 @@ export function FilterBar({ filters, businessTypes }: Props) {
                 ) : (
                   <Typography variant="body2" color="text.secondary">
                     Activa el modo avanzado para filtrar por IDs, nombres exactos, moneda, tipo de precio y duracion.
+                    Cada filtro avanzado activo suma 1 credito al coste base de busqueda.
                   </Typography>
                 )}
               </AccordionDetails>
             </Accordion>
 
             <Box display="flex" gap={1} flexWrap="wrap" flexDirection={{ xs: 'column', sm: 'row' }}>
+              <Chip
+                label={`Coste estimado: ${formatCredits(dynamicSearchCost)}`}
+                color={dynamicSearchCost > 1 ? 'secondary' : 'default'}
+                variant={dynamicSearchCost > 1 ? 'filled' : 'outlined'}
+                sx={{ alignSelf: { xs: 'stretch', sm: 'center' }, width: { xs: '100%', sm: 'auto' } }}
+              />
               <Button
                 variant="contained"
                 onClick={() => pushFilters({ ...form, page: 1 })}
