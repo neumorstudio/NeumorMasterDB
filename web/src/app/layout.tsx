@@ -4,6 +4,7 @@ import { AppBar, Box, Button, Container, Stack, Toolbar, Typography } from '@mui
 import Link from 'next/link';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { getServerUser } from '@/lib/auth/server';
+import { logServerInfo } from '@/lib/utils/logger';
 import { Providers } from './providers';
 import './globals.css';
 
@@ -31,6 +32,9 @@ export const revalidate = 0;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await getServerUser();
+  if (process.env.AUTH_DEBUG === '1') {
+    logServerInfo('layout.auth_state', { userId: user?.id ?? null });
+  }
   return (
     <html lang="es">
       <body className={`${fontSans.variable} ${fontDisplay.variable}`}>

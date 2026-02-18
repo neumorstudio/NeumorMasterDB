@@ -2,6 +2,9 @@ import { createServerClient } from '@supabase/ssr';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { getServerAuthEnv } from '@/lib/env';
+import { logServerError, logServerInfo } from '@/lib/utils/logger';
+
+const shouldDebugAuth = process.env.AUTH_DEBUG === '1';
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -28,7 +31,19 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getUser();
+  if (error) {
+    logServerError('auth.middleware.get_user.failed', error, {
+      path: request.nextUrl.pathname,
+      hasSbCookie: request.cookies.getAll().some((cookie) => cookie.name.startsWith('sb-')),
+    });
+  } else if (shouldDebugAuth) {
+    logServerInfo('auth.middleware.get_user.ok', {
+      path: request.nextUrl.pathname,
+      userId: data.user?.id ?? null,
+      hasSbCookie: request.cookies.getAll().some((cookie) => cookie.name.startsWith('sb-')),
+    });
+  }
 
   return response;
 }

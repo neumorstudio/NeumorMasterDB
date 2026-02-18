@@ -9,7 +9,7 @@ import { ResultsView } from '@/components/items/ResultsView';
 import { StatusState } from '@/components/common/StatusState';
 import { listItems, getReferences } from '@/lib/data/items';
 import { parseFilters } from '@/lib/filters/schema';
-import { logServerError } from '@/lib/utils/logger';
+import { logServerError, logServerInfo } from '@/lib/utils/logger';
 import type { Filters } from '@/types/items';
 
 type Props = {
@@ -23,6 +23,13 @@ export default async function ItemsPage({ searchParams }: Props) {
   const user = await getServerUser();
   const params = await searchParams;
   const filters = parseFilters(params);
+  if (process.env.AUTH_DEBUG === '1') {
+    logServerInfo('items.auth_state', {
+      userId: user?.id ?? null,
+      page: filters.page,
+      showAll: filters.showAll,
+    });
+  }
 
   const shouldFetch = hasActiveFilters(filters) || filters.showAll;
   const shouldCharge = shouldFetch && filters.page === 1;
